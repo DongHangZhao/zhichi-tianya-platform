@@ -1,0 +1,155 @@
+{% extends "base.html" %} {% block title %}{{
+target_date.strftime('%Y年%m月%d日') }} 的新闻{% endblock %} {% block content %}
+<div class="container mt-4">
+  <!-- 返回按钮和日期标题 -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <a
+          href="{{ url_for('news_routes.news_calendar') }}"
+          class="btn btn-secondary"
+        >
+          <i class="fas fa-arrow-left"></i> 返回日历
+        </a>
+        <h3>
+          <i class="far fa-calendar-alt text-primary"></i>
+          {{ target_date.strftime('%Y年%m月%d日') }} 的新闻
+        </h3>
+        <a href="{{ url_for('news') }}" class="btn btn-outline-primary">
+          <i class="fas fa-list"></i> 新闻列表
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新闻列表 -->
+  {% if news_items %}
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle"></i>
+    共找到 <strong>{{ news_items|length }}</strong> 条新闻
+  </div>
+
+  <div class="row">
+    {% for news in news_items %}
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm">
+        {% if news.image_url %}
+        <div class="row g-0">
+          <div class="col-md-4">
+            <img
+              src="{{ news.image_url }}"
+              class="img-fluid rounded-start h-100 object-fit-cover"
+              alt="{{ news.title }}"
+              style="min-height: 200px; max-height: 300px"
+              onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200/cccccc/666666?text=图片加载失败';"
+            />
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <h5 class="card-title">
+                <a
+                  href="{{ url_for('news_detail', news_id=news.id) }}"
+                  class="text-decoration-none text-dark"
+                >
+                  {{ news.title }}
+                </a>
+              </h5>
+              <p class="card-text text-muted">
+                <small
+                  >{{ news.summary or news.content[:150] + "..." if
+                  news.content|length > 150 else news.content }}</small
+                >
+              </p>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <span class="badge bg-success me-2">{{ news.source }}</span>
+                  <small class="text-muted">
+                    <i class="far fa-clock"></i>
+                    {{ news.timestamp.strftime('%H:%M') }}
+                  </small>
+                </div>
+                <a
+                  href="{{ url_for('news_detail', news_id=news.id) }}"
+                  class="btn btn-sm btn-outline-primary"
+                >
+                  阅读全文 <i class="fas fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="card-body">
+          <h5 class="card-title">
+            <a
+              href="{{ url_for('news_detail', news_id=news.id) }}"
+              class="text-decoration-none text-dark"
+            >
+              {{ news.title }}
+            </a>
+          </h5>
+          <p class="card-text text-muted">
+            <small
+              >{{ news.summary or news.content[:200] + "..." if
+              news.content|length > 200 else news.content }}</small
+            >
+          </p>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="badge bg-success me-2">{{ news.source }}</span>
+              <small class="text-muted">
+                <i class="far fa-clock"></i>
+                {{ news.timestamp.strftime('%Y-%m-%d %H:%M') }}
+              </small>
+            </div>
+            <a
+              href="{{ url_for('news_detail', news_id=news.id) }}"
+              class="btn btn-sm btn-outline-primary"
+            >
+              阅读全文 <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    这一天还没有新闻，过些天再来看看吧！
+  </div>
+  {% endif %}
+
+  <!-- 统计信息 -->
+  {% if news_items %}
+  <div class="card bg-light mt-4">
+    <div class="card-body">
+      <h6><i class="fas fa-chart-bar"></i> 数据统计</h6>
+      <div class="row">
+        <div class="col-md-4">
+          <p class="mb-0">
+            <strong>新闻总数：</strong> {{ news_items|length }} 条
+          </p>
+        </div>
+        <div class="col-md-4">
+          <p class="mb-0">
+            <strong>数据来源：</strong>
+            {% set sources = namespace(list=[]) %} {% for news_item in
+            news_items %} {% if news_item.source not in sources.list %} {% set
+            sources.list = sources.list + [news_item.source] %} {% endif %} {%
+            endfor %} {{ sources.list|join(', ') }}
+          </p>
+        </div>
+        <div class="col-md-4">
+          <p class="mb-0">
+            <strong>日期：</strong> {{ target_date.strftime('%Y年%m月%d日') }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

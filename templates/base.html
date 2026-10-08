@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}咫尺天涯 - 社交平台{% endblock %}</title>
+    <link
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      /* 渐变背景 */
+      .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .bg-gradient-success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      }
+      .bg-gradient-info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+      .bg-gradient-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+      .bg-gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      }
+      .bg-gradient-purple {
+        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+      }
+
+      /* 动画效果 */
+      @keyframes gradientShift {
+        0%,
+        100% {
+          filter: hue-rotate(0deg);
+        }
+        50% {
+          filter: hue-rotate(20deg);
+        }
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        50% {
+          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+      }
+
+      /* 统计卡片样式 */
+      .stat-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        transition: left 0.5s ease;
+      }
+
+      .stat-card:hover::before {
+        left: 100%;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-10px) scale(1.05);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        animation: glow 2s ease infinite;
+      }
+
+      .stat-icon {
+        transition: all 0.3s ease;
+        display: inline-block;
+      }
+
+      .stat-card:hover .stat-icon {
+        transform: scale(1.2) rotate(10deg);
+        animation: bounce 1s ease infinite;
+      }
+
+      .stat-number {
+        transition: all 0.3s ease;
+        font-weight: 700;
+      }
+
+      .stat-card:hover .stat-number {
+        transform: scale(1.1);
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      /* 轮播图滑动效果 */
+      .carousel-inner {
+        transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+
+      .carousel-item {
+        transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+
+      /* 轮播图指示器美化 */
+      .carousel-indicators [data-bs-target] {
+        width: 30px;
+        height: 4px;
+        border-radius: 2px;
+        background-color: rgba(255, 255, 255, 0.5);
+        border: none;
+        transition: all 0.3s ease;
+      }
+
+      .carousel-indicators .active {
+        width: 50px;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+      }
+
+      /* 轮播控制按钮美化 */
+      .carousel-control-prev,
+      .carousel-control-next {
+        width: 60px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .carousel:hover .carousel-control-prev,
+      .carousel:hover .carousel-control-next {
+        opacity: 1;
+      }
+
+      .carousel-control-prev-icon,
+      .carousel-control-next-icon {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+
+      .carousel-control-prev-icon:hover,
+      .carousel-control-next-icon:hover {
+        background-color: rgba(255, 255, 255, 0.4);
+        transform: scale(1.1);
+      }
+
+      /* 移动端适配 */
+      @media (max-width: 768px) {
+        .container {
+          padding: 0 10px;
+        }
+        .nav-item {
+          margin: 0 5px;
+        }
+        .post-card,
+        .video-card {
+          margin-bottom: 15px;
+        }
+      }
+
+      /* 导航栏用户头像 */
+      .user-avatar-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      /* 帖子卡片 */
+      .post-card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      }
+
+      /* 视频卡片 */
+      .video-card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease;
+      }
+      .video-card:hover {
+        transform: translateY(-5px);
+      }
+
+      /* 侧边栏 */
+      .sidebar {
+        position: sticky;
+        top: 20px;
+      }
+
+      /* 消息气泡 */
+      .message-bubble {
+        border-radius: 18px;
+        padding: 10px 15px;
+        max-width: 70%;
+      }
+
+      /* 热度标签 */
+      .trending-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+      }
+
+      /* 消息下拉菜单样式 */
+      .messages-dropdown-menu {
+        min-width: 350px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .message-preview {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .message-preview:last-child {
+        border-bottom: none;
+      }
+
+      .unread-message {
+        background-color: #f8f9fa;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+          <i class="fas fa-globe-asia me-2"></i> 咫尺天涯
+        </a>
+
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('index') }}"
+                ><i class="fas fa-home"></i> 首页</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('news') }}"
+                ><i class="fas fa-newspaper"></i> 新闻</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('videos') }}"
+                ><i class="fas fa-video"></i> 视频</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('trending') }}"
+                ><i class="fas fa-fire"></i> 热度</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('forum') }}"
+                ><i class="fas fa-comments"></i> 论坛</a
+              >
+            </li>
+            <li class="nav-item">
+              <form
+                class="d-flex"
+                action="{{ url_for('search') }}"
+                method="get"
+              >
+                <input
+                  class="form-control me-2"
+                  type="search"
+                  name="q"
+                  placeholder="搜索用户、帖子、视频..."
+                  aria-label="Search"
+                />
+                <button class="btn btn-outline-light" type="submit">
+                  搜索
+                </button>
+              </form>
+            </li>
+          </ul>
+
+          <ul class="navbar-nav ms-auto">
+            {% if current_user.is_authenticated %} {% if current_user.is_admin
+            %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('admin') }}"
+                ><i class="fas fa-crown"></i> 管理</a
+              >
+            </li>
+            {% endif %}
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle d-flex align-items-center"
+                href="#"
+                id="navbarDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+              >
+                <img
+                  src="{{ get_avatar_url(current_user.avatar) }}"
+                  class="user-avatar-sm me-2"
+                  alt="头像"
+                />
+                {{ current_user.username }}
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="{{ url_for('profile', username=current_user.username) }}"
+                    ><i class="fas fa-user me-2"></i> 个人资料</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('edit_profile') }}"
+                    ><i class="fas fa-cog me-2"></i> 编辑资料</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('messages') }}"
+                    ><i class="fas fa-envelope me-2"></i> 消息中心</a
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('logout') }}"
+                    ><i class="fas fa-sign-out-alt me-2"></i> 退出</a
+                  >
+                </li>
+              </ul>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('login') }}">登录</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('register') }}">注册</a>
+            </li>
+            {% endif %}
+          </ul>
+
+          <!-- 消息下拉菜单 -->
+          {% if current_user.is_authenticated %}
+          <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="messagesDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="fas fa-envelope"></i>
+                {% if current_user.unread_messages_count() > 0 %}
+                <span class="badge bg-danger"
+                  >{{ current_user.unread_messages_count() }}</span
+                >
+                {% endif %}
+              </a>
+              <ul
+                class="dropdown-menu dropdown-menu-end messages-dropdown-menu"
+                aria-labelledby="messagesDropdown"
+              >
+                <li><h6 class="dropdown-header">最近消息</h6></li>
+                {% set unread_messages = [] %} {% for msg in
+                current_user.received_messages %} {% if not msg.is_read %} {% if
+                unread_messages|length < 5 %} {% set _ =
+                unread_messages.append(msg) %} {% endif %} {% endif %} {% endfor
+                %} {% if unread_messages %} {% for msg in unread_messages %}
+                <li>
+                  <a
+                    class="dropdown-item message-preview {% if not msg.is_read %}unread-message{% endif %}"
+                    href="{{ url_for('chat_window', recipient=msg.sender.username) }}"
+                  >
+                    <div class="d-flex">
+                      <img
+                        src="{{ get_avatar_url(msg.sender.avatar) }}"
+                        class="rounded-circle me-2"
+                        style="width: 30px; height: 30px"
+                        alt="头像"
+                      />
+                      <div>
+                        <div class="fw-bold">{{ msg.sender.username }}</div>
+                        <div class="small">
+                          {{ msg.content[:30] }}{% if msg.content|length > 30
+                          %}...{% endif %}
+                        </div>
+                        <div class="small text-muted">
+                          {{ msg.timestamp.strftime('%m-%d %H:%M') }}
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+                {% endfor %} {% else %}
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('messages') }}"
+                    >暂无新消息</a
+                  >
+                </li>
+                {% endif %}
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('messages') }}"
+                    >查看全部消息</a
+                  >
+                </li>
+              </ul>
+            </li>
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <!-- Flash消息 -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+      <div
+        class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+        ></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+
+    <main>{% block content %}{% endblock %}</main>
+
+    <footer class="footer mt-5 py-4 bg-light">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <h5>咫尺天涯</h5>
+            <p>连接世界，分享生活。在这里，每个人都能找到属于自己的天地。</p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <h5>快速链接</h5>
+            <ul class="list-unstyled">
+              <li>
+                <a href="{{ url_for('index') }}" class="text-decoration-none"
+                  >首页</a
+                >
+              </li>
+              <li>
+                <a href="{{ url_for('news') }}" class="text-decoration-none"
+                  >新闻</a
+                >
+              </li>
+              <li>
+                <a href="{{ url_for('videos') }}" class="text-decoration-none"
+                  >视频</a
+                >
+              </li>
+              <li>
+                <a href="{{ url_for('trending') }}" class="text-decoration-none"
+                  >热度排行</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-4 mb-3">
+            <h5>联系我们</h5>
+            <p>邮箱: contact@zhichitianya.com</p>
+            <p>地址: 唐山工业职业技术大学</p>
+          </div>
+        </div>
+        <hr />
+        <div class="text-center">
+          <p class="mb-0">&copy; 2026 咫尺天涯社交平台. 保留所有权利.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/vendor/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+
+    <script>
+      // 全局保持用户在线状态的函数
+      function keepUserOnline() {
+        fetch('/api/update_user_status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({is_online: true})
+        })
+        .then(response => {
+          // 检查响应状态
+          if (!response.ok) {
+            // 如果返回401未授权或其他错误，不打印错误（可能是用户未登录）
+            if (response.status === 401) {
+              // 用户未登录，停止定时器
+              if (typeof statusInterval !== 'undefined') {
+                clearInterval(statusInterval);
+              }
+              return {success: false, message: '未登录'};
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            console.log('全局用户状态已更新');
+          }
+        })
+        .catch(error => {
+          // 只在非401错误时记录错误
+          if (error.message && !error.message.includes('401')) {
+            console.error('更新用户状态失败:', error);
+          }
+        });
+      }
+
+      // 如果用户已登录，则定期更新状态
+      {% if current_user.is_authenticated %}
+      // 立即更新一次
+      keepUserOnline();
+      // 每30秒更新一次用户状态
+      var statusInterval = setInterval(keepUserOnline, 30000);
+
+      // 页面卸载时更新状态为离线
+      window.addEventListener('beforeunload', function(event) {
+        // 使用navigator.sendBeacon确保在页面卸载时也能发送请求
+        fetch('/api/set_offline', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: ''
+        }).catch(err => console.error('发送离线状态失败:', err));
+      });
+      {% endif %}
+    </script>
+  </body>
+</html>

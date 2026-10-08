@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}搜索新闻 - 咫尺天涯{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 搜索表单 -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-search"></i> 搜索新闻</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('news_routes.news_search') }}" method="GET" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="keyword" class="form-label">关键字</label>
+                            <input type="text" class="form-control" id="keyword" name="keyword" 
+                                   value="{{ keyword or '' }}" placeholder="输入新闻标题或内容关键字">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date" class="form-label">日期</label>
+                            <input type="date" class="form-control" id="date" name="date" 
+                                   value="{{ search_date or '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="source" class="form-label">来源</label>
+                            <select class="form-select" id="source" name="source">
+                                <option value="">全部来源</option>
+                                {% for source_item in sources %}
+                                <option value="{{ source_item }}" {% if selected_source == source_item %}selected{% endif %}>
+                                    {{ source_item }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> 搜索
+                            </button>
+                            {% if keyword or search_date or selected_source %}
+                            <a href="{{ url_for('news_routes.news_search') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo"></i> 重置
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('news') }}" class="btn btn-outline-info">
+                                <i class="fas fa-list"></i> 查看全部
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索结果 -->
+    {% if news_items %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> 
+        找到 <strong>{{ pagination.total }}</strong> 条相关新闻
+        {% if keyword %}（关键字："{{ keyword }}"）{% endif %}
+        {% if search_date %}（日期：{{ search_date }}）{% endif %}
+        {% if selected_source %}（来源：{{ selected_source }}）{% endif %}
+    </div>
+
+    <div class="row">
+        {% for news in news_items %}
+        <div class="col-md-12 mb-4">
+            <div class="card shadow-sm">
+                {% if news.image_url %}
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="{{ news.image_url }}" 
+                             class="img-fluid rounded-start h-100 object-fit-cover" 
+                             alt="{{ news.title }}"
+                             style="min-height: 200px; max-height: 300px"
+                             onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200/cccccc/666666?text=图片加载失败';">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="{{ url_for('news_detail', news_id=news.id) }}" 
+                                   class="text-decoration-none text-dark">
+                                    {{ news.title }}
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted">
+                                <small>{{ news.summary or news.content[:150] + "..." if news.content|length > 150 else news.content }}</small>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-success me-2">{{ news.source }}</span>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock"></i> 
+                                        {{ news.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                                    </small>
+                                </div>
+                                <a href="{{ url_for('news_detail', news_id=news.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    阅读全文 <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{{ url_for('news_detail', news_id=news.id) }}" 
+                           class="text-decoration-none text-dark">
+                            {{ news.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted">
+                        <small>{{ news.summary or news.content[:200] + "..." if news.content|length > 200 else news.content }}</small>
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-success me-2">{{ news.source }}</span>
+                            <small class="text-muted">
+                                <i class="far fa-clock"></i> 
+                                {{ news.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
+                        </div>
+                        <a href="{{ url_for('news_detail', news_id=news.id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            阅读全文 <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 分页 -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('news_routes.news_search', 
+                           page=pagination.prev_num, 
+                           keyword=keyword, 
+                           date=search_date, 
+                           source=selected_source) }}">
+                    <i class="fas fa-chevron-left"></i> 上一页
+                </a>
+            </li>
+            
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('news_routes.news_search', 
+                                   page=p, 
+                                   keyword=keyword, 
+                                   date=search_date, 
+                                   source=selected_source) }}">{{ p }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('news_routes.news_search', 
+                           page=pagination.next_num, 
+                           keyword=keyword, 
+                           date=search_date, 
+                           source=selected_source) }}">
+                    下一页 <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        没有找到相关的新闻
+        {% if keyword %}（关键字："{{ keyword }}"）{% endif %}
+        {% if search_date %}（日期：{{ search_date }}）{% endif %}
+        {% if selected_source %}（来源：{{ selected_source }}）{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

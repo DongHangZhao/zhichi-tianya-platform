@@ -1,0 +1,341 @@
+/* Flask-Admin 自定义样式 - 现代化美化 */
+
+/* 图标样式 - 确保Font Awesome正常显示 */
+.fa,
+.fas,
+.far,
+.fal,
+.fab {
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+}
+
+/* 仪表盘图标大小 */
+.stat-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+/* 列表项图标 */
+.data-item .fa,
+.data-item .fas {
+  width: 20px;
+  text-align: center;
+}
+
+/* 卡片头部图标 */
+.card-header .fa,
+.card-header .fas {
+  width: 24px;
+  text-align: center;
+}
+
+/* 全局样式 */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: fixed;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+    sans-serif;
+}
+
+/* 导航栏 */
+.navbar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
+  border: none !important;
+  padding: 15px 0;
+}
+
+.navbar-brand {
+  font-size: 1.5em !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-nav > li > a {
+  color: #fff !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  margin: 0 5px;
+}
+
+.navbar-nav > li > a:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* 主容器 */
+.container {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  margin-top: 30px;
+  margin-bottom: 30px;
+  padding: 30px;
+}
+
+/* 表格样式 */
+.table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 动态斑马纹 - 渐变效果 */
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background: linear-gradient(90deg, #f8f9ff 0%, #f0f4ff 100%);
+}
+
+.table-striped > tbody > tr:nth-of-type(even) {
+  background: linear-gradient(90deg, #ffffff 0%, #fafbff 100%);
+}
+
+/* 行悬停效果 */
+.table-striped > tbody > tr:hover {
+  background: linear-gradient(90deg, #e8ecff 0%, #d8e0ff 100%) !important;
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* 表头样式 */
+.table thead th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  padding: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9em;
+}
+
+.table thead th a {
+  color: #fff !important;
+  text-decoration: none;
+}
+
+.table thead th a:hover {
+  text-decoration: underline;
+}
+
+/* 表格单元格 */
+.table td {
+  padding: 12px 15px;
+  border-top: 1px solid #e9ecef;
+  vertical-align: middle;
+  transition: all 0.3s ease;
+}
+
+/* 操作按钮样式 */
+.btn {
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* 搜索框 */
+.form-control {
+  border-radius: 10px;
+  border: 2px solid #e9ecef;
+  padding: 10px 15px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* 分页 */
+.pagination > li > a {
+  color: #667eea;
+  border: 2px solid #e9ecef;
+  margin: 0 3px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.pagination > li > a:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-color: #667eea;
+  transform: translateY(-2px);
+}
+
+.pagination > .active > a {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+}
+
+/* 标题 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #333;
+  font-weight: 700;
+}
+
+/* 面包屑导航 */
+.breadcrumb {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 10px;
+  padding: 12px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.breadcrumb > li > a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.breadcrumb > li > a:hover {
+  text-decoration: underline;
+}
+
+/* 消息提示 */
+.alert {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 15px 20px;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: #fff;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+  color: #fff;
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #fff;
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+/* 导出按钮 */
+.dropdown-menu {
+  border-radius: 10px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: none;
+  padding: 10px 0;
+}
+
+.dropdown-menu > li > a {
+  padding: 10px 20px;
+  transition: all 0.3s ease;
+}
+
+.dropdown-menu > li > a:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+/* 筛选器 */
+.filter {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+    margin-top: 15px;
+  }
+
+  .table {
+    font-size: 0.9em;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 0.85em;
+  }
+}
+
+/* 加载动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.container {
+  animation: fadeIn 0.5s ease;
+}
+
+/* 表格行动画 */
+.table-striped > tbody > tr {
+  animation: fadeIn 0.3s ease;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}

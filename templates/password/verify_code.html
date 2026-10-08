@@ -1,0 +1,127 @@
+{% extends "base.html" %} {% block title %}验证重置码 - 咫尺天涯{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-header bg-info text-white">
+          <h4 class="mb-0"><i class="fas fa-shield-alt"></i> 验证重置码</h4>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            请输入您的用户名和管理员发送给您的6位重置码
+          </div>
+
+          <form id="verifyCodeForm">
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="fas fa-user"></i> 用户名
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="username"
+                name="username"
+                placeholder="请输入用户名"
+                required
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="fas fa-key"></i> 6位重置码
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="code"
+                name="code"
+                placeholder="请输入6位重置码"
+                required
+                maxlength="6"
+                pattern="[0-9]{6}"
+                title="请输入6位数字"
+              />
+              <small class="text-muted"
+                >重置码为6位数字，请联系管理员获取</small
+              >
+            </div>
+
+            <div id="alertMessage"></div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-info text-white">
+                <i class="fas fa-check"></i> 验证
+              </button>
+            </div>
+          </form>
+
+          <hr />
+          <div class="text-center">
+            <a href="/password/forgot-password" class="text-muted">
+              <i class="fas fa-arrow-left"></i> 返回忘记密码
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document
+    .getElementById("verifyCodeForm")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+
+      try {
+        const response = await fetch("/password/verify-code", {
+          method: "POST",
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showAlert("success", "验证成功，请设置新密码...");
+          setTimeout(() => {
+            window.location.href = `/password/reset-password?user_id=${result.user_id}`;
+          }, 1500);
+        } else {
+          showAlert("danger", result.message);
+        }
+      } catch (error) {
+        showAlert("danger", "网络错误，请稍后重试");
+      }
+    });
+
+  function showAlert(type, message) {
+    const alertDiv = document.getElementById("alertMessage");
+    alertDiv.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+  }
+</script>
+
+<style>
+  .card {
+    border-radius: 15px;
+    overflow: hidden;
+  }
+  .card-header {
+    border-radius: 15px 15px 0 0 !important;
+  }
+  .form-control:focus {
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+  }
+</style>
+
+{% endblock %}

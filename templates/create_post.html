@@ -1,0 +1,57 @@
+{% extends "base.html" %} {% block title %}发布帖子 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">
+            <i class="fas fa-edit text-primary"></i> 发布新帖子
+          </h4>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+              {{ form.title.label(class="form-label") }} {{
+              form.title(class="form-control" + (" is-invalid" if
+              form.title.errors else ""), placeholder="输入帖子标题") }} {% if
+              form.title.errors %}
+              <div class="invalid-feedback">
+                {% for error in form.title.errors %} {{ error }} {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              {{ form.content.label(class="form-label") }} {{
+              form.content(class="form-control", rows="8",
+              placeholder="分享你的想法...") }}
+            </div>
+
+            <div class="mb-3">
+              {{ form.image.label(class="form-label") }} {{
+              form.image(class="form-control") }}
+              <div class="form-text">支持 JPG, PNG 格式图片</div>
+            </div>
+
+            <div class="mb-3">
+              {{ form.video.label(class="form-label") }} {{
+              form.video(class="form-control") }}
+              <div class="form-text">支持 MP4, AVI, MOV, WMV, MKV, WEBM 格式视频</div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2"
+                >取消</a
+              >
+              <button type="submit" class="btn btn-primary">发布帖子</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

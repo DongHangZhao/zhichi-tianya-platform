@@ -1,0 +1,194 @@
+{% extends "base.html" %} {% block title %}新闻日历 - {{ year }}年{{ month
+}}月{% endblock %} {% block content %}
+<div class="container mt-4">
+  <!-- 导航和月份切换 -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('news') }}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> 返回新闻列表
+        </a>
+        <h2>{{ year }}年{{ month }}月</h2>
+        <div>
+          {% if month > 1 %}
+          <a
+            href="{{ url_for('news_routes.news_calendar', year=year, month=month-1) }}"
+            class="btn btn-outline-primary"
+          >
+            <i class="fas fa-chevron-left"></i> 上月
+          </a>
+          {% else %}
+          <a
+            href="{{ url_for('news_routes.news_calendar', year=year-1, month=12) }}"
+            class="btn btn-outline-primary"
+          >
+            <i class="fas fa-chevron-left"></i> 上年
+          </a>
+          {% endif %} {% if month < 12 %}
+          <a
+            href="{{ url_for('news_routes.news_calendar', year=year, month=month+1) }}"
+            class="btn btn-outline-primary ms-2"
+          >
+            下月 <i class="fas fa-chevron-right"></i>
+          </a>
+          {% else %}
+          <a
+            href="{{ url_for('news_routes.news_calendar', year=year+1, month=1) }}"
+            class="btn btn-outline-primary ms-2"
+          >
+            下年 <i class="fas fa-chevron-right"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 日历视图 -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0"><i class="far fa-calendar-alt"></i> 新闻日历</h4>
+        </div>
+        <div class="card-body">
+          <!-- 星期标题 -->
+          <div class="row">
+            {% for day_name in ['周一', '周二', '周三', '周四', '周五', '周六',
+            '周日'] %}
+            <div class="col text-center fw-bold">{{ day_name }}</div>
+            {% endfor %}
+          </div>
+
+          <!-- 日历网格 -->
+          {% for week in calendar_days %}
+          <div class="row mt-2">
+            {% for day in week %} {% if day != 0 %} {% set info =
+            day_info.get(day, {}) %} {% set is_weekend = info.is_weekend if info
+            else false %} {% set has_news = info.has_news if info else false %}
+            {% else %} {% set is_weekend = false %} {% set has_news = false %}
+            {% endif %}
+            <div
+              class="col {% if has_news %}bg-light{% endif %} {% if is_weekend %}text-danger{% endif %}"
+              style="min-height: 100px; border: 1px solid #e0e0e0; padding: 5px"
+            >
+              {% if day != 0 %} {% set current_date = date(year, month, day) %}
+              <div
+                class="d-flex justify-content-between align-items-center mb-2"
+              >
+                {% if news_by_date.get(current_date) %}
+                <a
+                  href="{{ url_for('news_routes.news_by_date', date_str=current_date.strftime('%Y-%m-%d')) }}"
+                  class="text-decoration-none text-primary fw-bold"
+                  title="点击查看{{ day }}日的新闻"
+                >
+                  {{ day }}日
+                </a>
+                {% else %}
+                <strong
+                  class="{% if news_by_date.get(current_date) %}text-primary{% endif %}"
+                >
+                  {{ day }}日
+                </strong>
+                {% endif %} {% if news_by_date.get(current_date) %}
+                <span class="badge bg-info"
+                  >{{ news_by_date[current_date]|length }}条</span
+                >
+                {% endif %}
+              </div>
+
+              {% if news_by_date.get(current_date) %}
+              <!-- 日期内的新闻列表 -->
+              <div class="news-list">
+                {% for news_item in news_by_date[current_date][:3] %}
+                <div class="mb-2" style="font-size: 12px">
+                  <a
+                    href="{{ url_for('news_detail', news_id=news_item.id) }}"
+                    class="text-decoration-none text-dark"
+                    title="{{ news_item.title }}"
+                  >
+                    <i class="fas fa-newspaper text-success"></i>
+                    {{ news_item.title[:15] }}{% if news_item.title|length > 15
+                    %}...{% endif %}
+                  </a>
+                </div>
+                {% endfor %} {% if news_by_date[current_date]|length > 3 %}
+                <div class="text-center">
+                  <small class="text-muted"
+                    >还有 {{ news_by_date[current_date]|length - 3 }}
+                    条...</small
+                  >
+                </div>
+                {% endif %}
+              </div>
+              {% else %}
+              <div class="text-muted text-center" style="font-size: 12px">
+                <i class="fas fa-inbox"></i> 无新闻
+              </div>
+              {% endif %} {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 统计信息 -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5><i class="fas fa-chart-bar"></i> 本月统计</h5>
+          <div class="row">
+            <div class="col-md-4">
+              <p class="mb-0">
+                <strong>总新闻数：</strong>
+                {% set total = namespace(value=0) %} {% for news_list in
+                news_by_date.values() %} {% set total.value = total.value +
+                news_list|length %} {% endfor %} {{ total.value }} 条
+              </p>
+            </div>
+            <div class="col-md-4">
+              <p class="mb-0">
+                <strong>有新闻的日期：</strong> {{ news_by_date|length }} 天
+              </p>
+            </div>
+            <div class="col-md-4">
+              <p class="mb-0">
+                <strong>数据来源：</strong>
+                {% set sources = namespace(list=[]) %} {% for news_list in
+                news_by_date.values() %} {% for news_item in news_list %} {% if
+                news_item.source not in sources.list %} {% set sources.list =
+                sources.list + [news_item.source] %} {% endif %} {% endfor %} {%
+                endfor %} {{ sources.list|join(', ') }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .news-list {
+    max-height: 80px;
+    overflow-y: auto;
+  }
+
+  .news-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .news-list::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+  }
+
+  .row:hover {
+    background-color: #f8f9fa;
+  }
+</style>
+{% endblock %}

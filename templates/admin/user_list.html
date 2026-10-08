@@ -1,0 +1,138 @@
+{% extends 'admin/model/list.html' %} {% block head_tail %} {{ super() }}
+<style>
+  /* 修复下拉菜单被遮挡问题 */
+  .table tbody tr {
+    position: relative;
+    z-index: 1;
+  }
+
+  .table tbody tr:hover {
+    z-index: 100;
+  }
+
+  .table tbody tr .dropdown-menu {
+    z-index: 1050;
+    position: absolute;
+  }
+
+  /* 确保下拉菜单不被表格裁剪 */
+  .table-responsive {
+    overflow: visible !important;
+  }
+
+  /* 优化操作列 */
+  .list-buttons-column {
+    position: relative;
+    z-index: 10;
+  }
+</style>
+{% endblock %} {% block list_row_actions scoped %} {{ super() }}
+<li>
+  <a
+    href="{{ get_url('.reset_password', id=row.id) }}"
+    onclick="
+      return confirm('确定要重置该用户的密码吗？\n新密码将随机生成并显示。');
+    "
+  >
+    <i class="fa fa-key"></i> 重置密码
+  </a>
+</li>
+
+{# 权限管理下拉菜单 #}
+<li class="dropdown">
+  <a
+    href="#"
+    class="dropdown-toggle"
+    data-toggle="dropdown"
+    onclick="event.stopPropagation()"
+  >
+    <i class="fa fa-cogs text-primary"></i> 权限管理 <b class="caret"></b>
+  </a>
+  <ul class="dropdown-menu" style="min-width: 180px">
+    {# 限制功能 #}
+    <li class="dropdown-header">
+      <i class="fa fa-ban text-danger"></i> 限制功能
+    </li>
+    {% if row.can_post %}
+    <li>
+      <a
+        href="{{ get_url('.ban_post_only', id=row.id) }}"
+        style="padding: 8px 20px; display: block; white-space: nowrap"
+      >
+        <i class="fa fa-file text-warning"></i> 禁止发帖
+      </a>
+    </li>
+    {% else %}
+    <li>
+      <a
+        href="{{ get_url('.unban_post_only', id=row.id) }}"
+        class="text-success"
+        style="padding: 8px 20px; display: block; white-space: nowrap"
+      >
+        <i class="fa fa-file"></i> 允许发帖
+      </a>
+    </li>
+    {% endif %} {% if row.can_video %}
+    <li>
+      <a
+        href="{{ get_url('.ban_video_only', id=row.id) }}"
+        style="padding: 8px 20px; display: block; white-space: nowrap"
+      >
+        <i class="fa fa-video text-warning"></i> 禁止发视频
+      </a>
+    </li>
+    {% else %}
+    <li>
+      <a
+        href="{{ get_url('.unban_video_only', id=row.id) }}"
+        class="text-success"
+        style="padding: 8px 20px; display: block; white-space: nowrap"
+      >
+        <i class="fa fa-video"></i> 允许发视频
+      </a>
+    </li>
+    {% endif %} {% if row.can_comment %}
+    <li>
+      <a
+        href="{{ get_url('.ban_comment_only', id=row.id) }}"
+        style="padding: 8px 20px; display: block; white-space: nowrap"
+      >
+        <i class="fa fa-comment text-warning"></i> 禁止评论
+      </a>
+    </li>
+    {% else %}
+    <li>
+      <a
+        href="{{ get_url('.unban_comment_only', id=row.id) }}"
+        class="text-success"
+        style="padding: 8px 20px; display: block; white-space: nowrap"
+      >
+        <i class="fa fa-comment"></i> 允许评论
+      </a>
+    </li>
+    {% endif %}
+
+    <li role="separator" class="divider"></li>
+
+    {# 全部解封 #} {% if row.is_banned or not row.can_post or not row.can_video
+    or not row.can_comment %}
+    <li>
+      <a
+        href="{{ get_url('.unban_user', id=row.id) }}"
+        class="text-success"
+        style="padding: 8px 20px; display: block; white-space: nowrap"
+      >
+        <i class="fa fa-check-circle"></i> <strong>全部解封</strong>
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+</li>
+
+{# 密码日志 #}
+<li>
+  <a href="{{ get_url('.view_reset_logs', id=row.id) }}" class="text-info">
+    <i class="fa fa-list"></i> 密码日志
+  </a>
+</li>
+{% endblock %}

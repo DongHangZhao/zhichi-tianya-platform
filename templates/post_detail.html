@@ -1,0 +1,330 @@
+{% extends "base.html" %} {% block title %}{{ post.title }} - 咫尺天涯{%
+endblock %} {% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <!-- 帖子详情 -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex mb-3">
+            <a href="{{ url_for('profile', username=post.author.username) }}">
+              <img
+                src="{{ get_avatar_url(post.author.avatar) }}"
+                class="rounded-circle me-3"
+                style="width: 50px; height: 50px; object-fit: cover"
+                alt="头像"
+              />
+            </a>
+            <div>
+              <h5 class="card-title">
+                <a
+                  href="{{ url_for('profile', username=post.author.username) }}"
+                  class="text-decoration-none"
+                  >{{ post.author.username }}</a
+                >
+              </h5>
+              <small class="text-muted"
+                >{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small
+              >
+            </div>
+          </div>
+
+          <h4 class="card-title">{{ post.title }}</h4>
+          <p class="card-text">{{ post.content }}</p>
+
+          {% if post.image_url %}
+          <img
+            src="{{ url_for('static', filename=post.image_url) }}"
+            class="img-fluid rounded mb-3"
+            alt="帖子配图"
+          />
+          {% endif %} {% if post.video_url %}
+          <video controls class="img-fluid rounded mb-3">
+            <source
+              src="{{ url_for('static', filename=post.video_url) }}"
+              type="video/mp4"
+            />
+            您的浏览器不支持视频播放。
+          </video>
+          {% endif %}
+
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <button
+                class="btn btn-sm btn-outline-secondary like-btn"
+                data-type="post"
+                data-id="{{ post.id }}"
+              >
+                <i class="far fa-heart"></i>
+                <span class="likes-count">{{ post.likes_count }}</span>
+              </button>
+              {% if current_user.id == post.author_id or current_user.is_admin
+              %}
+              <form
+                action="{{ url_for('delete.delete_post', post_id=post.id) }}"
+                method="POST"
+                style="display: inline"
+              >
+                <button
+                  type="submit"
+                  class="btn btn-sm btn-outline-danger ms-2"
+                  onclick="return confirm('确定要删除这个帖子吗？')"
+                >
+                  <i class="fas fa-trash"></i> 删除
+                </button>
+              </form>
+              {% endif %}
+            </div>
+            <div>
+              {% if current_user.is_authenticated %} {% if current_user.id !=
+              post.author.id %}
+              <!-- 防止用户关注自己 -->
+              {% if current_user.is_following(post.author) %}
+              <button
+                class="btn btn-sm btn-outline-secondary ms-2 private-message-btn"
+                data-username="{{ post.author.username }}"
+              >
+                <i class="fas fa-envelope"></i> 私信
+              </button>
+              {% else %}
+              <button
+                class="btn btn-sm btn-outline-secondary ms-2 follow-btn"
+                data-username="{{ post.author.username }}"
+                data-action="follow"
+              >
+                <i class="fas fa-user-plus"></i> 关注
+              </button>
+              {% endif %} {% else %}
+              <button class="btn btn-sm btn-outline-secondary ms-2" disabled>
+                <i class="fas fa-user"></i> 自己
+              </button>
+              {% endif %} {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 评论区域 -->
+      <div class="card">
+        <div class="card-header">
+          <h5>评论 ({{ comments|length }})</h5>
+        </div>
+        <div class="card-body">
+          {% if current_user.is_authenticated %}
+          <form
+            method="POST"
+            action="{{ url_for('add_comment', post_id=post.id) }}"
+          >
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.content.label(class="form-label") }} {{
+              form.content(class="form-control", rows="3",
+              placeholder="写下您的评论...") }} {% if form.content.errors %}
+              <div class="text-danger">
+                {% for error in form.content.errors %}
+                <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">发布评论</button>
+          </form>
+          {% else %}
+          <p><a href="{{ url_for('login') }}">登录</a>后发表评论</p>
+          {% endif %}
+
+          <hr />
+
+          {% for comment in comments %}
+          <div class="d-flex mb-3">
+            <a
+              href="{{ url_for('profile', username=comment.author.username) }}"
+            >
+              <img
+                src="{{ get_avatar_url(comment.author.avatar) }}"
+                class="rounded-circle me-3"
+                style="width: 40px; height: 40px; object-fit: cover"
+                alt="头像"
+              />
+            </a>
+            <div class="flex-grow-1">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-subtitle mb-1">
+                    <a
+                      href="{{ url_for('profile', username=comment.author.username) }}"
+                      class="text-decoration-none"
+                      >{{ comment.author.username }}</a
+                    >
+                    <small class="text-muted float-end"
+                      >{{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}</small
+                    >
+                  </h6>
+                  <p class="card-text">{{ comment.content }}</p>
+                  {% if comment.author_id == current_user.id or
+                  current_user.is_admin %}
+                  <form
+                    action="{{ url_for('delete.delete_comment', comment_id=comment.id) }}"
+                    method="POST"
+                    style="display: inline"
+                  >
+                    <button
+                      type="submit"
+                      class="btn btn-sm btn-outline-danger mt-2"
+                      onclick="return confirm('确定要删除这条评论吗？')"
+                    >
+                      <i class="fas fa-trash"></i> 删除
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-muted">暂无评论</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <!-- 用户信息 -->
+      <div class="card mb-4">
+        <div class="card-body text-center">
+          <a href="{{ url_for('profile', username=post.author.username) }}">
+            <img
+              src="{{ get_avatar_url(post.author.avatar) }}"
+              class="rounded-circle mb-3"
+              style="width: 80px; height: 80px; object-fit: cover"
+              alt="头像"
+            />
+          </a>
+          <h5 class="card-title">
+            <a
+              href="{{ url_for('profile', username=post.author.username) }}"
+              class="text-decoration-none"
+              >{{ post.author.username }}</a
+            >
+          </h5>
+          <p class="card-text text-muted">
+            {{ post.author.bio[:100] if post.author.bio else '暂无简介' }}...
+          </p>
+          <div class="d-flex justify-content-between">
+            <div>
+              <strong>{{ post.author.followed.count() }}</strong>
+              <small class="text-muted">关注</small>
+            </div>
+            <div>
+              <strong>{{ post.author.followers.count() }}</strong>
+              <small class="text-muted">粉丝</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 相关帖子 -->
+      <div class="card">
+        <div class="card-header">
+          <h5>相关帖子</h5>
+        </div>
+        <div class="card-body">
+          {% for related_post in related_posts %}
+          <div class="mb-3">
+            <h6>
+              <a
+                href="{{ url_for('post_detail', post_id=related_post.id) }}"
+                class="text-decoration-none"
+              >
+                {{ related_post.title[:50] }}{% if related_post.title|length >
+                50 %}...{% endif %}
+              </a>
+            </h6>
+            <small class="text-muted"
+              >{{ related_post.timestamp.strftime('%m-%d') }}</small
+            >
+          </div>
+          {% else %}
+          <p class="text-muted">暂无相关帖子</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 点赞功能
+    document.querySelectorAll(".like-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const type = this.dataset.type;
+        const id = this.dataset.id;
+
+        fetch(`/like_${type}/${id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const icon = this.querySelector("i");
+            const countSpan = this.querySelector(".likes-count");
+
+            if (data.liked) {
+              icon.classList.remove("far");
+              icon.classList.add("fas", "text-danger");
+            } else {
+              icon.classList.remove("fas", "text-danger");
+              icon.classList.add("far");
+            }
+
+            countSpan.textContent = data.likes_count;
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    });
+
+    // 关注/取消关注功能
+    document.querySelectorAll(".follow-btn").forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        const username = this.dataset.username;
+        const action = this.dataset.action;
+
+        fetch(`/${action}/${username}`, {
+          method: "GET",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // 切换按钮状态
+              if (action === "follow") {
+                this.innerHTML = '<i class="fas fa-check"></i> 已关注';
+                this.className = "btn btn-sm btn-success";
+              } else {
+                this.innerHTML = '<i class="fas fa-user-plus"></i> 关注';
+                this.className = "btn btn-sm btn-outline-secondary follow-btn";
+                this.dataset.action = "follow";
+              }
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    });
+
+    // 私信功能
+    document.querySelectorAll(".private-message-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const username = this.dataset.username;
+        window.location.href = `/chat/${username}`;
+      });
+    });
+  });
+</script>
+{% endblock %}

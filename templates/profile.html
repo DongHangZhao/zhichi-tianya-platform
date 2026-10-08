@@ -1,0 +1,384 @@
+{% extends "base.html" %} {% block title %}{{ user.username }}的个人主页 -
+咫尺天涯{% endblock %} {% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body text-center">
+          <img
+            src="{{ get_avatar_url(user.avatar) }}"
+            class="rounded-circle mb-3"
+            style="width: 120px; height: 120px; object-fit: cover"
+            alt="头像"
+          />
+          <h4>{{ user.username }}</h4>
+          {% if user.bio %}
+          <p class="text-muted">{{ user.bio }}</p>
+          {% endif %} {% if user.location %}
+          <p>
+            <i class="fas fa-map-marker-alt text-info"></i> {{ user.location }}
+          </p>
+          {% endif %} {% if user.website %}
+          <p>
+            <i class="fas fa-link text-info"></i>
+            <a href="{{ user.website }}" target="_blank">{{ user.website }}</a>
+          </p>
+          {% endif %} {% if current_user.is_authenticated and (current_user.id
+          == user.id or current_user.is_admin) %}
+          <p><i class="fas fa-envelope text-info"></i> {{ user.email }}</p>
+          <p>
+            <i class="fas fa-calendar text-info"></i> 注册于 {{
+            user.join_date.strftime('%Y-%m-%d') }}
+          </p>
+          {% endif %}
+
+          <div class="d-flex justify-content-around mt-3">
+            <div>
+              <a href="{{ url_for('show_following', username=user.username) }}"
+                ><strong>{{ user.get_following_count() }}</strong></a
+              >
+              <div>
+                <a
+                  href="{{ url_for('show_following', username=user.username) }}"
+                  >关注</a
+                >
+              </div>
+            </div>
+            <div>
+              <a href="{{ url_for('show_followers', username=user.username) }}"
+                ><strong>{{ user.get_followers_count() }}</strong></a
+              >
+              <div>
+                <a
+                  href="{{ url_for('show_followers', username=user.username) }}"
+                  >粉丝</a
+                >
+              </div>
+            </div>
+          </div>
+
+          {% if current_user.is_authenticated and current_user.id != user.id %}
+          <div class="mt-3">
+            {% if current_user.is_following(user) %}
+            <button
+              class="btn btn-danger follow-btn-profile"
+              data-username="{{ user.username }}"
+              data-action="unfollow"
+            >
+              取消关注
+            </button>
+            {% else %}
+            <button
+              class="btn btn-primary follow-btn-profile"
+              data-username="{{ user.username }}"
+              data-action="follow"
+            >
+              关注
+            </button>
+            {% endif %}
+            <button
+              class="btn btn-outline-info ms-2 private-message-btn"
+              data-username="{{ user.username }}"
+            >
+              <i class="fas fa-envelope"></i> 发消息
+            </button>
+          </div>
+          {% endif %} {% if current_user.id == user.id %}
+          <div class="mt-3">
+            <a
+              href="{{ url_for('edit_profile') }}"
+              class="btn btn-outline-primary"
+              >编辑资料</a
+            >
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active"
+            id="posts-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#posts"
+            type="button"
+            role="tab"
+          >
+            帖子
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="videos-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#videos"
+            type="button"
+            role="tab"
+          >
+            视频
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content mt-3" id="myTabContent">
+        <div class="tab-pane fade show active" id="posts" role="tabpanel">
+          {% if posts %} {% for post in posts %}
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">{{ post.title }}</h5>
+              <p class="card-text">
+                {{ post.content[:300] }}{% if post.content|length > 300 %}...{%
+                endif %}
+              </p>
+              {% if post.image_url %}
+              <img
+                src="{{ url_for('static', filename=post.image_url) }}"
+                class="img-fluid rounded"
+                alt="帖子配图"
+              />
+              {% endif %}
+              <div
+                class="d-flex justify-content-between align-items-center mt-3"
+              >
+                <small class="text-muted"
+                  >{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }} {% if
+                  post.updated_at and post.updated_at != post.timestamp %}
+                  (更新于 {{ post.updated_at.strftime('%m-%d %H:%M') }}) {%
+                  endif %}
+                </small>
+                <div>
+                  {% if current_user.id == post.author_id or
+                  current_user.is_admin %}
+                  <a
+                    href="{{ url_for('edit_post', post_id=post.id) }}"
+                    class="btn btn-sm btn-outline-primary me-2"
+                  >
+                    <i class="fas fa-edit"></i> 编辑
+                  </a>
+                  <a
+                    href="{{ url_for('post_detail', post_id=post.id) }}"
+                    class="btn btn-sm btn-outline-info me-2"
+                  >
+                    <i class="fas fa-history"></i> 历史
+                  </a>
+                  {% endif %}
+                  <button
+                    class="btn btn-sm btn-outline-secondary like-btn"
+                    data-type="post"
+                    data-id="{{ post.id }}"
+                  >
+                    <i class="far fa-heart"></i>
+                    <span class="likes-count">{{ post.likes_count }}</span>
+                  </button>
+                  <span class="ms-2 text-muted"
+                    ><i class="far fa-comment"></i> {{ post.comments_count
+                    }}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <p class="text-muted">暂无帖子</p>
+          {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="videos" role="tabpanel">
+          {% if videos %}
+          <div class="row">
+            {% for video in videos %}
+            <div class="col-md-6 mb-3">
+              <div class="card">
+                <a
+                  href="{{ url_for('video_detail', video_id=video.id) }}"
+                  class="text-decoration-none"
+                >
+                  {% if video.thumbnail_url %} {% if
+                  video.thumbnail_url.startswith('http') %}
+                  <img
+                    src="{{ video.thumbnail_url }}"
+                    class="card-img-top"
+                    style="height: 150px; object-fit: cover"
+                    alt="视频缩略图"
+                  />
+                  {% else %}
+                  <img
+                    src="{{ url_for('static', filename=video.thumbnail_url) }}"
+                    class="card-img-top"
+                    style="height: 150px; object-fit: cover"
+                    alt="视频缩略图"
+                  />
+                  {% endif %} {% else %}
+                  <div
+                    class="bg-secondary d-flex align-items-center justify-content-center"
+                    style="height: 150px"
+                  >
+                    <i class="fas fa-video fa-2x text-white"></i>
+                  </div>
+                  {% endif %}
+                  <div class="card-body">
+                    <h6 class="card-title">{{ video.title }}</h6>
+                    <p class="card-text small">
+                      {{ video.description[:100] if video.description else ''
+                      }}{% if video.description and video.description|length >
+                      100 %}...{% endif %}
+                    </p>
+                  </div>
+                  <div class="card-footer bg-transparent">
+                    <small class="text-muted"
+                      >{{ video.timestamp.strftime('%m-%d') }} {% if
+                      video.updated_at and video.updated_at != video.timestamp
+                      %} (更新于 {{ video.updated_at.strftime('%m-%d') }}) {%
+                      endif %}
+                    </small>
+                    <div class="float-end">
+                      <i class="far fa-eye"></i> {{ video.views }}
+                    </div>
+                    {% if current_user.id == video.uploader_id or
+                    current_user.is_admin %}
+                    <div class="mt-2">
+                      <a
+                        href="{{ url_for('edit_video', video_id=video.id) }}"
+                        class="btn btn-sm btn-outline-primary me-1"
+                      >
+                        <i class="fas fa-edit"></i> 编辑
+                      </a>
+                      <a
+                        href="{{ url_for('video_detail', video_id=video.id) }}"
+                        class="btn btn-sm btn-outline-info"
+                      >
+                        <i class="fas fa-history"></i> 历史
+                      </a>
+                    </div>
+                    {% endif %}
+                  </div>
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted">暂无视频</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 点赞功能
+    document.querySelectorAll(".like-btn").forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.preventDefault(); // 阻止链接跳转
+        const type = this.dataset.type;
+        const id = this.dataset.id;
+
+        fetch(`/like_${type}/${id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const icon = this.querySelector("i");
+            const countSpan = this.querySelector(".likes-count");
+
+            if (data.liked) {
+              icon.classList.remove("far");
+              icon.classList.add("fas", "text-danger");
+            } else {
+              icon.classList.remove("fas", "text-danger");
+              icon.classList.add("far");
+            }
+
+            countSpan.textContent = data.likes_count;
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    });
+
+    // 关注/取消关注功能（用户资料页面）
+    document.querySelectorAll(".follow-btn-profile").forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        const username = this.dataset.username;
+        const action = this.dataset.action;
+
+        fetch(`/${action}/${username}`, {
+          method: "GET",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // 切换按钮状态
+              if (action === "follow") {
+                this.textContent = "取消关注";
+                this.className = "btn btn-danger follow-btn-profile";
+                this.dataset.action = "unfollow";
+              } else {
+                this.textContent = "关注";
+                this.className = "btn btn-primary follow-btn-profile";
+                this.dataset.action = "follow";
+              }
+
+              // 更新粉丝计数显示
+              // 当前用户点击关注/取消关注按钮时，被操作用户的粉丝数会变化
+              // data.followers_count 是被操作用户的粉丝数（即当前页面显示用户的粉丝数）
+              if (data.followers_count !== undefined) {
+                // 更新当前页面用户的粉丝数（第二个div中的strong标签）
+                const targetUserFollowersCount = document.querySelectorAll(
+                  ".d-flex.justify-content-around.mt-3 div strong"
+                )[1]; // 第二个strong标签是当前页面用户的粉丝数
+                if (targetUserFollowersCount) {
+                  targetUserFollowersCount.textContent = data.followers_count;
+                }
+              }
+
+              // 显示成功消息
+              const alertDiv = document.createElement("div");
+              alertDiv.className =
+                "alert alert-success alert-dismissible fade show position-fixed";
+              alertDiv.style.top = "20px";
+              alertDiv.style.right = "20px";
+              alertDiv.style.zIndex = "9999";
+              alertDiv.innerHTML = `
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              `;
+              document.body.appendChild(alertDiv);
+
+              // 3秒后自动消失
+              setTimeout(() => {
+                const alert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                alert.close();
+              }, 3000);
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    });
+
+    // 私信功能（用户资料页面）
+    document.querySelectorAll(".private-message-btn").forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        const username = this.dataset.username;
+
+        // 跳转到与该用户的聊天页面
+        window.location.href = `/chat/${username}`;
+      });
+    });
+  });
+</script>
+{% endblock %}

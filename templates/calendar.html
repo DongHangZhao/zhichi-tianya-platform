@@ -1,0 +1,255 @@
+{% extends "base.html" %} {% block title %}新闻日历 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-8">
+      <h2 class="mb-4">
+        <i class="fas fa-calendar-alt text-primary"></i> 新闻日历
+      </h2>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 id="current-month-year">2026年1月</h5>
+            <div>
+              <button class="btn btn-outline-primary me-2" id="prev-month">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="btn btn-primary" id="today">今天</button>
+              <button class="btn btn-outline-primary ms-2" id="next-month">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered text-center" id="calendar-table">
+              <thead>
+                <tr>
+                  <th class="text-primary">日</th>
+                  <th class="text-primary">一</th>
+                  <th class="text-primary">二</th>
+                  <th class="text-primary">三</th>
+                  <th class="text-primary">四</th>
+                  <th class="text-primary">五</th>
+                  <th class="text-primary">六</th>
+                </tr>
+              </thead>
+              <tbody id="calendar-body">
+                <!-- 日历内容将通过JavaScript动态生成 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle text-info"></i> 使用说明
+          </h5>
+        </div>
+        <div class="card-body">
+          <p class="card-text">
+            <i class="fas fa-mouse-pointer text-primary"></i>
+            点击日历中的日期可以查看当天的新闻
+          </p>
+          <p class="card-text">
+            <i class="fas fa-calendar-check text-success"></i>
+            有新闻的日期会高亮显示
+          </p>
+          <p class="card-text">
+            <i class="fas fa-sync-alt text-warning"></i> 新闻每日自动更新
+          </p>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-search text-info"></i> 搜索新闻</h5>
+        </div>
+        <div class="card-body">
+          <form action="{{ url_for('search') }}" method="get">
+            <input type="hidden" name="type" value="news" />
+            <div class="input-group">
+              <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="输入新闻关键词..."
+                required
+              />
+              <button class="btn btn-outline-secondary" type="submit">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-fire text-danger"></i> 热门新闻</h5>
+        </div>
+        <div class="card-body">
+          {% set hot_news = get_hot_news(5) %} {% if hot_news %} {% for news in
+          hot_news %}
+          <div class="d-flex mb-3">
+            <div class="flex-shrink-0">
+              {% if news.image_url %}
+              <img
+                src="{{ news.image_url }}"
+                class="img-fluid rounded"
+                style="width: 60px; height: 60px; object-fit: cover"
+                alt="{{ news.title }}"
+                onerror="this.onerror=null; this.src='https://via.placeholder.com/60x60/cccccc/666666?text=N';"
+              />
+              {% else %}
+              <div
+                class="bg-light d-flex align-items-center justify-content-center rounded"
+                style="width: 60px; height: 60px"
+              >
+                <i class="fas fa-newspaper text-muted"></i>
+              </div>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1 ms-2">
+              <h6 class="mb-0 small">
+                <a
+                  href="{{ url_for('news_detail', news_id=news.id) }}"
+                  class="text-decoration-none text-dark"
+                >
+                  {{ news.title[:30] }}{% if news.title|length > 30 %}...{%
+                  endif %}
+                </a>
+              </h6>
+              <small class="text-muted d-block">
+                <i class="fas fa-heart"></i> {{ news.likes_count }} |
+                <i class="fas fa-eye"></i> {{ news.views }}
+              </small>
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <p class="text-muted text-center mb-0">暂无热门新闻</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentDate = new Date();
+  let currentYear = currentDate.getFullYear();
+  let currentMonth = currentDate.getMonth(); // 月份从0开始
+
+  // 加载有新闻的日期
+  async function loadNewsDates(year, month) {
+    try {
+      const response = await fetch(`/api/news_dates/${year}/${month + 1}`);
+      const dates = await response.json();
+      return dates;
+    } catch (error) {
+      console.error("加载新闻日期失败:", error);
+      return [];
+    }
+  }
+
+  // 渲染日历
+  async function renderCalendar() {
+    const newsDates = await loadNewsDates(currentYear, currentMonth);
+
+    // 更新月份标题
+    document.getElementById(
+      "current-month-year"
+    ).textContent = `${currentYear}年${currentMonth + 1}月`;
+
+    const tbody = document.getElementById("calendar-body");
+    tbody.innerHTML = "";
+
+    // 获取当月第一天是星期几
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    // 获取当月天数
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // 创建日历行
+    let date = 1;
+    for (let week = 0; week < 6; week++) {
+      const row = document.createElement("tr");
+
+      for (let day = 0; day < 7; day++) {
+        const cell = document.createElement("td");
+
+        if (week === 0 && day < firstDay) {
+          // 月初空白单元格
+          cell.innerHTML = "&nbsp;";
+        } else if (date > daysInMonth) {
+          // 月末空白单元格
+          cell.innerHTML = "&nbsp;";
+        } else {
+          // 日期单元格
+          cell.textContent = date;
+
+          // 检查是否有新闻
+          if (newsDates.includes(date)) {
+            cell.style.backgroundColor = "#e7f3ff";
+            cell.style.cursor = "pointer";
+            cell.title = "点击查看当天新闻";
+
+            // 添加点击事件
+            cell.addEventListener("click", function () {
+              const dateString = `${currentYear}-${String(
+                currentMonth + 1
+              ).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+              window.location.href = `/news/date/${dateString}`;
+            });
+          }
+
+          date++;
+        }
+
+        row.appendChild(cell);
+      }
+
+      tbody.appendChild(row);
+
+      if (date > daysInMonth) {
+        break; // 如果日期超出月份天数，停止循环
+      }
+    }
+  }
+
+  // 切换到上个月
+  document.getElementById("prev-month").addEventListener("click", function () {
+    currentMonth--;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+    renderCalendar();
+  });
+
+  // 切换到下个月
+  document.getElementById("next-month").addEventListener("click", function () {
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    renderCalendar();
+  });
+
+  // 跳转到今天
+  document.getElementById("today").addEventListener("click", function () {
+    const today = new Date();
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth();
+    renderCalendar();
+  });
+
+  // 初始化日历
+  renderCalendar();
+</script>
+{% endblock %}

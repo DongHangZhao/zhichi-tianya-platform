@@ -1,0 +1,79 @@
+{% extends "base.html" %} {% block title %}上传视频 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-danger text-white">
+          <h4 class="mb-0"><i class="fas fa-upload"></i> 上传视频</h4>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+              <label for="title" class="form-label"
+                >{{ form.title.label }}</label
+              >
+              {{ form.title(class="form-control", placeholder="输入视频标题") }}
+              {% if form.title.errors %}
+              <div class="text-danger">
+                {% for error in form.title.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label"
+                >{{ form.description.label }}</label
+              >
+              {{ form.description(class="form-control", rows="4",
+              placeholder="输入视频描述") }} {% if form.description.errors %}
+              <div class="text-danger">
+                {% for error in form.description.errors %}{{ error }}{% endfor
+                %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="video_file" class="form-label"
+                >{{ form.video_file.label }}</label
+              >
+              {{ form.video_file(class="form-control") }}
+              <small class="form-text text-muted"
+                >支持的视频格式：mp4, avi, mov, wmv, mkv, webm</small
+              >
+              {% if form.video_file.errors %}
+              <div class="text-danger">
+                {% for error in form.video_file.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="thumbnail" class="form-label"
+                >{{ form.thumbnail.label }}</label
+              >
+              {{ form.thumbnail(class="form-control") }}
+              <small class="form-text text-muted"
+                >支持的图片格式：jpg, png,
+                jpeg（可选，不上传将使用默认缩略图）</small
+              >
+              {% if form.thumbnail.errors %}
+              <div class="text-danger">
+                {% for error in form.thumbnail.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="d-grid gap-2">
+              {{ form.submit(class="btn btn-danger btn-lg") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

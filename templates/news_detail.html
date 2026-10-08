@@ -1,0 +1,338 @@
+{% extends "base.html" %} {% block title %}{{ news.title }} - 新闻详情 -
+咫尺天涯{% endblock %} {% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- 新闻详情 -->
+      <article class="card mb-4">
+        {% if news.image_url %}
+        <img
+          src="{{ news.image_url }}"
+          class="card-img-top"
+          alt="{{ news.title }}"
+          style="height: 300px; object-fit: cover"
+          onerror="this.onerror=null; this.src='https://via.placeholder.com/800x300/cccccc/666666?text=新闻图片加载失败';"
+        />
+        {% endif %}
+        <div class="card-body">
+          <h1 class="card-title">{{ news.title }}</h1>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <small class="text-muted">
+              <i class="fas fa-clock"></i>
+              {{ news.timestamp.strftime('%Y-%m-%d %H:%M') }} |
+              <i class="fas fa-source"></i> {{ news.source or '未知来源' }} |
+              <i class="fas fa-eye"></i> {{ news.views }} 次阅读
+            </small>
+            {% if current_user.is_authenticated %}
+            <button
+              class="btn btn-sm btn-outline-danger like-btn"
+              data-news-id="{{ news.id }}"
+            >
+              <i
+                class="fas fa-heart {% if news.is_liked_by(current_user) %}text-danger{% endif %}"
+              ></i>
+              {% if news.is_liked_by(current_user) %} 取消喜欢 {% else %} 喜欢
+              {% endif %} ({{ news.likes_count }})
+            </button>
+            {% endif %}
+          </div>
+          <div class="news-content">
+            <p class="lead">{{ news.summary or '' }}</p>
+            <div class="content-body">
+              {{ news.content|urlize_with_style|safe }}
+            </div>
+          </div>
+
+          <!-- 查看原文按钮 -->
+          {% if news.url %}
+          <div class="mt-4 pt-3 border-top">
+            <a
+              href="{{ news.url }}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-primary btn-lg"
+            >
+              <i class="fas fa-external-link-alt"></i> 查看原文（{{ news.source
+              }}）
+            </a>
+            <small class="text-muted d-block mt-2">
+              <i class="fas fa-info-circle"></i>
+              点击按钮将在新窗口打开原新闻网站
+            </small>
+          </div>
+          {% endif %}
+        </div>
+      </article>
+
+      <!-- 相关新闻 -->
+      {% if related_news %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-newspaper text-info"></i> 相关新闻
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            {% for related in related_news %}
+            <div class="col-md-6 mb-3">
+              <div class="card h-100">
+                {% if related.image_url %}
+                <img
+                  src="{{ related.image_url }}"
+                  class="card-img-top"
+                  alt="{{ related.title }}"
+                  style="height: 150px; object-fit: cover"
+                  onerror="this.onerror=null; this.src='https://via.placeholder.com/200x150/cccccc/666666?text=相关新闻';"
+                />
+                {% endif %}
+                <div class="card-body">
+                  <h6 class="card-title">
+                    <a
+                      href="{{ url_for('news_detail', news_id=related.id) }}"
+                      class="text-decoration-none"
+                    >
+                      {{ related.title[:40] }}{% if related.title|length > 40
+                      %}...{% endif %}
+                    </a>
+                  </h6>
+                  <small class="text-muted">
+                    <i class="fas fa-clock"></i> {{
+                    related.timestamp.strftime('%m-%d') }}
+                  </small>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- 评论区 -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-comment text-success"></i> 评论 ({{ comments|length
+            }})
+          </h5>
+        </div>
+        <div class="card-body" id="comments">
+          {% if current_user.is_authenticated %}
+          <form
+            method="POST"
+            action="{{ url_for('add_news_comment', news_id=news.id) }}"
+          >
+            {{ comment_form.hidden_tag() }}
+            <div class="mb-3">
+              {{ comment_form.content.label(class="form-label") }} {{
+              comment_form.content(class="form-control", rows="3") }} {% for
+              error in comment_form.content.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            {{ comment_form.submit(class="btn btn-primary") }}
+          </form>
+          {% else %}
+          <p class="text-muted">
+            请 <a href="{{ url_for('login') }}">登录</a> 后发表评论。
+          </p>
+          {% endif %}
+
+          <hr />
+
+          {% for comment in comments %}
+          <div class="media mb-3">
+            <img
+              src="{{ get_avatar_url(comment.author.avatar) }}"
+              class="mr-3 rounded-circle"
+              width="40"
+              height="40"
+              alt="头像"
+            />
+            <div class="media-body">
+              <h6 class="mt-0">
+                <a
+                  href="{{ url_for('profile', username=comment.author.username) }}"
+                  class="text-decoration-none"
+                >
+                  {{ comment.author.username }}
+                </a>
+                <small class="text-muted"
+                  >{{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}</small
+                >
+              </h6>
+              <p>{{ comment.content }}</p>
+              {% if comment.author_id == current_user.id or
+              current_user.is_admin %}
+              <form
+                action="{{ url_for('delete.delete_comment', comment_id=comment.id) }}"
+                method="POST"
+                style="display: inline"
+              >
+                <button
+                  type="submit"
+                  class="btn btn-sm btn-outline-danger mt-1"
+                  onclick="return confirm('确定要删除这条评论吗？')"
+                >
+                  <i class="fas fa-trash"></i> 删除
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+          {% else %}
+          <p class="text-muted">暂无评论，快来发表第一个评论吧！</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- 热门新闻 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-fire text-danger"></i> 热门新闻 Top 5
+          </h5>
+        </div>
+        <div class="card-body">
+          {% set hot_news = get_hot_news(5) %} {% for news_item in hot_news %}
+          <div class="d-flex mb-3">
+            <div class="flex-shrink-0">
+              {% if news_item.image_url %}
+              <img
+                src="{{ news_item.image_url }}"
+                class="img-fluid rounded"
+                style="width: 60px; height: 60px; object-fit: cover"
+                alt="{{ news_item.title }}"
+                onerror="this.onerror=null; this.src='https://via.placeholder.com/60x60/cccccc/666666?text=H';"
+              />
+              {% else %}
+              <div
+                class="bg-light d-flex align-items-center justify-content-center rounded"
+                style="width: 60px; height: 60px"
+              >
+                <i class="fas fa-newspaper text-muted"></i>
+              </div>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1 ms-2">
+              <h6 class="mb-0 small">
+                <a
+                  href="{{ url_for('news_detail', news_id=news_item.id) }}"
+                  class="text-decoration-none text-dark"
+                >
+                  {{ news_item.title[:30] }}{% if news_item.title|length > 30
+                  %}...{% endif %}
+                </a>
+              </h6>
+              <small class="text-muted d-block">
+                <i class="fas fa-heart"></i> {{ news_item.likes_count }} |
+                <i class="fas fa-eye"></i> {{ news_item.views }}
+              </small>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-muted">暂无热门新闻</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 分享按钮 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-share-alt text-primary"></i> 分享
+          </h5>
+        </div>
+        <div class="card-body">
+          <button class="btn btn-outline-primary btn-sm me-2">
+            <i class="fab fa-weibo"></i> 微博
+          </button>
+          <button class="btn btn-outline-success btn-sm me-2">
+            <i class="fab fa-weixin"></i> 微信
+          </button>
+          <button class="btn btn-outline-info btn-sm">
+            <i class="fas fa-link"></i> 链接
+          </button>
+        </div>
+      </div>
+
+      <!-- 日期导航 -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-calendar-alt text-warning"></i> 日期导航
+          </h5>
+        </div>
+        <div class="card-body">
+          <p class="mb-0">
+            <strong>发布日期:</strong><br />
+            {{ news.timestamp.strftime('%Y年%m月%d日 %H:%M') }}
+          </p>
+          <a
+            href="{{ url_for('news_routes.news_by_date', date_str=news.timestamp.strftime('%Y-%m-%d')) }}"
+            class="btn btn-outline-secondary btn-sm w-100"
+          >
+            <i class="fas fa-list"></i> 查看当天新闻
+          </a>
+          <a
+            href="{{ url_for('news_routes.news_calendar') }}"
+            class="btn btn-outline-info btn-sm w-100 mt-2"
+          >
+            <i class="fas fa-calendar"></i> 新闻日历
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 新闻点赞功能
+  document.addEventListener("DOMContentLoaded", function () {
+    const likeButton = document.querySelector(".like-btn");
+    if (likeButton) {
+      likeButton.addEventListener("click", function () {
+        const newsId = this.getAttribute("data-news-id");
+
+        fetch(`/like_news/${newsId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // 后端返回 {'liked': true/false, 'likes_count': number}
+            // 直接处理响应，不再检查 data.success
+            const countMatch = this.innerHTML.match(/\(\d+\)/);
+            if (countMatch && data.likes_count !== undefined) {
+              this.innerHTML = this.innerHTML.replace(
+                /\(\d+\)/,
+                `(${data.likes_count})`
+              );
+            }
+
+            // 切换按钮文本和样式
+            if (data.liked === true) {
+              this.innerHTML =
+                '<i class="fas fa-heart text-danger"></i> 取消喜欢 (' +
+                data.likes_count +
+                ")";
+            } else {
+              this.innerHTML =
+                '<i class="fas fa-heart"></i> 喜欢 (' + data.likes_count + ")";
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("操作失败，请稍后重试");
+          });
+      });
+    }
+  });
+</script>
+{% endblock %}

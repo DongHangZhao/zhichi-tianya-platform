@@ -1,0 +1,608 @@
+{% extends "base.html" %} {% block title %}论坛 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <!-- 论坛标题和撰写帖子按钮 -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4><i class="fas fa-comments text-primary"></i> 论坛</h4>
+        <div>
+          {% if current_user.is_authenticated %}
+          <a
+            href="{{ url_for('create_post') }}"
+            class="btn btn-primary btn-sm me-2"
+          >
+            <i class="fas fa-plus"></i> 发布帖子
+          </a>
+          {% endif %}
+          <div class="btn-group" role="group">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm active"
+              id="latest-posts-btn"
+            >
+              最新
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              id="popular-posts-btn"
+            >
+              热门
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 撰写帖子卡片 (仅认证用户可见) -->
+      {% if current_user.is_authenticated %}
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex mb-3">
+            <a href="{{ url_for('profile', username=current_user.username) }}">
+              <img
+                src="{{ get_avatar_url(current_user.avatar) }}"
+                class="rounded-circle me-3"
+                style="width: 40px; height: 40px; object-fit: cover"
+                alt="头像"
+              />
+            </a>
+            <a
+              href="{{ url_for('create_post') }}"
+              class="btn btn-outline-secondary w-100 text-start ps-3"
+            >
+              {{ current_user.username }}，想分享什么？
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- 帖子列表 -->
+      <div id="posts-container">
+        {% if posts %} {% for post in posts %}
+        <div class="card mb-3 post-card" data-post-id="{{ post.id }}">
+          <div class="card-body">
+            <div class="d-flex mb-3">
+              <a href="{{ url_for('profile', username=post.author.username) }}">
+                <img
+                  src="{{ get_avatar_url(post.author.avatar) }}"
+                  class="rounded-circle me-3"
+                  style="width: 40px; height: 40px; object-fit: cover"
+                  alt="头像"
+                />
+              </a>
+              <div>
+                <h6 class="card-title mb-0">
+                  <a
+                    href="{{ url_for('profile', username=post.author.username) }}"
+                    class="text-decoration-none"
+                    >{{ post.author.username }}</a
+                  >
+                </h6>
+                <small class="text-muted"
+                  >{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small
+                >
+              </div>
+            </div>
+
+            <h5 class="card-title">{{ post.title }}</h5>
+            <p class="card-text">
+              {{ post.content[:300] }}{% if post.content|length > 300 %}...{%
+              endif %}
+            </p>
+
+            {% if post.image_url %}
+            <img
+              src="{{ url_for('static', filename=post.image_url) }}"
+              class="img-fluid rounded mb-3"
+              alt="帖子配图"
+            />
+            {% endif %} {% if post.video_url %}
+            <video controls class="img-fluid rounded mb-3">
+              <source
+                src="{{ url_for('static', filename=post.video_url) }}"
+                type="video/mp4"
+              />
+              您的浏览器不支持视频播放。
+            </video>
+            {% endif %}
+
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <button
+                  class="btn btn-sm btn-outline-secondary like-btn"
+                  data-type="post"
+                  data-id="{{ post.id }}"
+                >
+                  <i class="far fa-heart"></i>
+                  <span class="likes-count">{{ post.likes_count }}</span>
+                </button>
+                <button
+                  class="btn btn-sm btn-outline-secondary ms-2 comment-btn"
+                  data-post-id="{{ post.id }}"
+                >
+                  <i class="far fa-comment"></i> {{ post.comments_count }}
+                </button>
+              </div>
+              <div>
+                {% if current_user.is_authenticated %} {% if current_user.id !=
+                post.author.id %}
+                <!-- 防止用户关注自己 -->
+                {% if current_user.is_following(post.author) %}
+                <button class="btn btn-sm btn-success ms-2" disabled>
+                  <i class="fas fa-check"></i> 已关注
+                </button>
+                <button
+                  class="btn btn-sm btn-outline-secondary ms-2 private-message-btn"
+                  data-username="{{ post.author.username }}"
+                >
+                  <i class="fas fa-envelope"></i> 私信
+                </button>
+                {% else %}
+                <button
+                  class="btn btn-sm btn-outline-secondary ms-2 follow-btn"
+                  data-username="{{ post.author.username }}"
+                  data-action="follow"
+                >
+                  <i class="fas fa-user-plus"></i> 关注
+                </button>
+                {% endif %} {% else %}
+                <button class="btn btn-sm btn-outline-secondary ms-2" disabled>
+                  <i class="fas fa-user"></i> 自己
+                </button>
+                {% endif %} {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+          <p class="text-muted">暂无帖子</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <!-- 热门内容 -->
+      <div class="card mb-4">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <i class="fas fa-fire text-warning"></i> 热门内容
+          </h5>
+          <a
+            href="{{ url_for('trending_daily') }}"
+            class="btn btn-sm btn-outline-primary"
+          >
+            更多
+          </a>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            {% for item in daily_trends[:10] %} {% if item.item %}
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              {% if item.type == 'post' %}
+              <a
+                href="{{ url_for('profile', username=item.item.author.username) }}"
+                class="text-decoration-none"
+              >
+                {{ item.item.title[:40] }}{% if item.item.title|length > 40
+                %}...{% endif %}
+              </a>
+              {% elif item.type == 'video' %}
+              <a href="{{ url_for('videos') }}" class="text-decoration-none">
+                {{ item.item.title[:40] }}{% if item.item.title|length > 40
+                %}...{% endif %}
+              </a>
+              {% elif item.type == 'news' %}
+              <a href="#" class="text-decoration-none">
+                {{ item.item.title[:40] }}{% if item.item.title|length > 40
+                %}...{% endif %}
+              </a>
+              {% endif %}
+              <span class="badge bg-danger rounded-pill"
+                >{{ "%.2f"|format(item.score) }}</span
+              >
+            </li>
+            {% endif %} {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- 今日热榜 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-line text-info"></i> 今日热榜
+          </h5>
+        </div>
+        <div class="card-body">
+          <ol class="list-group list-group-numbered">
+            {% for item in daily_trends[:20] %} {% if item.item %}
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
+              {% if item.type == 'post' %}
+              <a
+                href="{{ url_for('profile', username=item.item.author.username) }}"
+                class="text-decoration-none"
+              >
+                {{ item.item.title[:30] }}{% if item.item.title|length > 30
+                %}...{% endif %}
+              </a>
+              {% elif item.type == 'video' %}
+              <a href="{{ url_for('videos') }}" class="text-decoration-none">
+                {{ item.item.title[:30] }}{% if item.item.title|length > 30
+                %}...{% endif %}
+              </a>
+              {% elif item.type == 'news' %}
+              <a href="#" class="text-decoration-none">
+                {{ item.item.title[:30] }}{% if item.item.title|length > 30
+                %}...{% endif %}
+              </a>
+              {% endif %}
+              <span class="badge bg-warning rounded-pill"
+                >{{ "%.2f"|format(item.score) }}</span
+              >
+            </li>
+            {% endif %} {% endfor %}
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 点赞功能
+    document.querySelectorAll(".like-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const type = this.dataset.type;
+        const id = this.dataset.id;
+
+        fetch(`/like_${type}/${id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const icon = this.querySelector("i");
+            const countSpan = this.querySelector(".likes-count");
+
+            if (data.liked) {
+              icon.classList.remove("far");
+              icon.classList.add("fas", "text-danger");
+            } else {
+              icon.classList.remove("fas", "text-danger");
+              icon.classList.add("far");
+            }
+
+            countSpan.textContent = data.likes_count;
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    });
+
+    // 评论功能
+    document.querySelectorAll(".comment-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const postId = this.dataset.postId;
+        window.location.href = `/post_detail/${postId}`;
+      });
+    });
+
+    // 关注/取消关注功能
+    document.querySelectorAll(".follow-btn").forEach((button) => {
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        const username = this.dataset.username;
+        const action = this.dataset.action;
+
+        fetch(`/${action}/${username}`, {
+          method: "GET",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // 切换按钮状态
+              if (action === "follow") {
+                this.innerHTML = '<i class="fas fa-check"></i> 已关注';
+                this.className = "btn btn-sm btn-success";
+                // 不再添加事件监听器，因为按钮已经变为已关注状态
+              } else {
+                this.innerHTML = '<i class="fas fa-user-plus"></i> 关注';
+                this.className = "btn btn-sm btn-outline-secondary follow-btn";
+                this.dataset.action = "follow";
+              }
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+    });
+
+    // 私信功能
+    document.querySelectorAll(".private-message-btn").forEach((button) => {
+      button.addEventListener("click", function () {
+        const username = this.dataset.username;
+        window.location.href = `/chat/${username}`;
+      });
+    });
+
+    // 最新/热门帖子切换功能
+    const latestBtn = document.getElementById('latest-posts-btn');
+    const popularBtn = document.getElementById('popular-posts-btn');
+
+    if (latestBtn && popularBtn) {
+      latestBtn.addEventListener('click', function() {
+        fetchPosts('latest');
+        this.classList.add('active');
+        popularBtn.classList.remove('active');
+      });
+
+      popularBtn.addEventListener('click', function() {
+        fetchPosts('popular');
+        this.classList.add('active');
+        latestBtn.classList.remove('active');
+      });
+    }
+
+    // 获取帖子的函数
+    function fetchPosts(type) {
+      fetch(`/api/posts/${type}`)
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById('posts-container');
+          container.innerHTML = '';
+
+          if (data.posts && data.posts.length > 0) {
+            data.posts.forEach(post => {
+              const postElement = createPostElement(post);
+              container.appendChild(postElement);
+            });
+
+            // 重新绑定事件监听器
+            attachEventListeners();
+          } else {
+            container.innerHTML = `
+              <div class="text-center py-5">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <p class="text-muted">暂无帖子</p>
+              </div>
+            `;
+          }
+        })
+        .catch(error => console.error('Error fetching posts:', error));
+    }
+
+    // 创建帖子元素的辅助函数
+    function createPostElement(post) {
+      const div = document.createElement('div');
+      div.className = 'card mb-3 post-card';
+      div.setAttribute('data-post-id', post.id);
+
+      let imageHtml = '';
+      if (post.image_url) {
+        imageHtml = `<img src="${post.image_url}" class="img-fluid rounded mb-3" alt="帖子配图" />`;
+      }
+
+      let videoHtml = '';
+      if (post.video_url) {
+        videoHtml = `<video controls class="img-fluid rounded mb-3"><source src="${post.video_url}" type="video/mp4">您的浏览器不支持视频播放。</video>`;
+      }
+
+      // 根据当前用户是否关注了帖子作者，决定关注按钮的状态
+      // 使用当前用户的ID来判断是否是自己的帖子
+      // 由于JavaScript无法直接访问Jinja2变量，我们需要在页面加载时将当前用户ID存储到一个全局变量中
+      const currentUserId = {{ current_user.id if current_user.is_authenticated else 'null' }};
+      let followButtonHtml = '';
+
+      if(post.author.id !== currentUserId) {
+        // 不是自己的帖子，使用API来确定关注状态
+        // 这里我们先创建通用按钮，后续可以通过API调用来更新状态
+        followButtonHtml = `<button class="btn btn-sm btn-outline-secondary ms-2 follow-btn" data-username="${post.author.username}" data-action="follow"><i class="fas fa-user-plus"></i> 关注</button>`;
+      } else {
+        // 是自己的帖子
+        followButtonHtml = `<button class="btn btn-sm btn-outline-secondary ms-2" disabled><i class="fas fa-user"></i> 自己</button>`;
+      }
+
+      div.innerHTML = `
+        <div class="card-body">
+          <div class="d-flex mb-3">
+            <a href="/profile/${post.author.username}">
+              <img src="${post.author_avatar_url}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover" alt="头像" />
+            </a>
+            <div>
+              <h6 class="card-title mb-0">
+                <a href="/profile/${post.author.username}" class="text-decoration-none">${post.author.username}</a>
+              </h6>
+              <small class="text-muted">${post.timestamp}</small>
+            </div>
+          </div>
+
+          <h5 class="card-title">${post.title}</h5>
+          <p class="card-text">${post.content.substring(0, 300)}${post.content.length > 300 ? '...' : ''}</p>
+
+          ${imageHtml}
+          ${videoHtml}
+
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <button class="btn btn-sm btn-outline-secondary like-btn" data-type="post" data-id="${post.id}">
+                <i class="far fa-heart"></i>
+                <span class="likes-count">${post.likes_count}</span>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary ms-2 comment-btn" data-post-id="${post.id}">
+                <i class="far fa-comment"></i> ${post.comments_count}
+              </button>
+            </div>
+            <div>
+              ${followButtonHtml}
+            </div>
+          </div>
+        </div>
+      `;
+
+      return div;
+    }
+
+    // 重新绑定事件监听器的辅助函数
+    function attachEventListeners() {
+      // 点赞功能
+      document.querySelectorAll(".like-btn:not(.bound)").forEach((button) => {
+        button.classList.add('bound');
+        button.addEventListener("click", function () {
+          const type = this.dataset.type;
+          const id = this.dataset.id;
+
+          fetch(`/like_${type}/${id}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              const icon = this.querySelector("i");
+              const countSpan = this.querySelector(".likes-count");
+
+              if (data.liked) {
+                icon.classList.remove("far");
+                icon.classList.add("fas", "text-danger");
+              } else {
+                icon.classList.remove("fas", "text-danger");
+                icon.classList.add("far");
+              }
+
+              countSpan.textContent = data.likes_count;
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+      });
+
+      // 评论功能
+      document.querySelectorAll(".comment-btn:not(.bound)").forEach((button) => {
+        button.classList.add('bound');
+        button.addEventListener("click", function () {
+          const postId = this.dataset.postId;
+          window.location.href = `/post_detail/${postId}`;
+        });
+      });
+
+      // 私信功能
+      document.querySelectorAll(".private-message-btn:not(.bound)").forEach((button) => {
+        button.classList.add('bound');
+        button.addEventListener("click", function () {
+          const username = this.dataset.username;
+          window.location.href = `/chat/${username}`;
+        });
+      });
+
+      // 关注功能
+      document.querySelectorAll(".follow-btn:not(.bound)").forEach((button) => {
+        button.classList.add('bound');
+        button.addEventListener("click", function (e) {
+          e.preventDefault();
+          const username = this.dataset.username;
+          const action = this.dataset.action;
+
+          fetch(`/${action}/${username}`, {
+            method: "GET",
+            headers: {
+              "X-Requested-With": "XMLHttpRequest",
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                if (action === "follow") {
+                  this.innerHTML = '<i class="fas fa-check"></i> 已关注';
+                  this.className = "btn btn-sm btn-success";
+                } else {
+                  this.innerHTML = '<i class="fas fa-user-plus"></i> 关注';
+                  this.className = "btn btn-sm btn-outline-secondary follow-btn";
+                  this.dataset.action = "follow";
+                }
+              }
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+      });
+    }
+
+    // 如果页面上已有帖子元素，为它们绑定初始事件
+    attachEventListeners();
+
+    // 实现定时刷新功能（每30秒刷新一次热门内容）
+    setInterval(function() {
+      // 这里可以实现定期检查是否有新的热门帖子
+      // 目前暂时不做具体实现，可根据实际需求扩展
+    }, 30000);
+
+    // 实时更新今日热榜
+    function updateTrendingList() {
+      fetch('/api/trending/daily')
+        .then(response => response.json())
+        .then(data => {
+          if(data.success && data.trends) {
+            const trendElements = document.querySelectorAll('.list-group-numbered li');
+            trendElements.forEach((element, index) => {
+              if(index < data.trends.length) {
+                const trend = data.trends[index];
+                const link = element.querySelector('a');
+                const badge = element.querySelector('.badge');
+
+                if(link && badge && trend.item) {
+                  link.textContent = trend.item.title.length > 30 ?
+                    trend.item.title.substring(0, 30) + '...' :
+                    trend.item.title;
+                  badge.textContent = trend.score.toFixed(2);
+
+                  // 添加动画效果
+                  element.style.animation = 'none';
+                  setTimeout(() => {
+                    element.style.animation = 'fadeInScale 0.5s ease-in';
+                  }, 10);
+                }
+              }
+            });
+          }
+        })
+        .catch(error => console.log('热榜更新失败:', error));
+    }
+
+    // 每分钟更新一次热榜
+    setInterval(updateTrendingList, 60000);
+
+    // 页面加载完成后立即更新一次
+    setTimeout(updateTrendingList, 5000);
+  });
+
+  // 添加CSS动画样式
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeInScale {
+      from { opacity: 0.5; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .list-group-item {
+      transition: all 0.3s ease;
+    }
+  `;
+  document.head.appendChild(style);
+</script>
+{% endblock %}

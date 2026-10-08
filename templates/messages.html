@@ -1,0 +1,183 @@
+{% extends "base.html" %} {% block title %}消息 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-4">
+      <!-- 消息侧边栏 -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-comments text-primary"></i> 消息
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <!-- 搜索联系人 -->
+          <div class="p-3 border-bottom">
+            <input
+              type="text"
+              class="form-control"
+              id="searchContacts"
+              placeholder="搜索联系人..."
+            />
+          </div>
+
+          <!-- 消息选项卡 -->
+          <ul class="nav nav-tabs" id="messageTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link active"
+                id="recent-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#recent"
+                type="button"
+                role="tab"
+              >
+                最近联系
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="friends-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#friends"
+                type="button"
+                role="tab"
+              >
+                我的好友
+              </button>
+            </li>
+          </ul>
+
+          <!-- 选项卡内容 -->
+          <div class="tab-content" id="messageTabContent">
+            <!-- 最近联系人 -->
+            <div class="tab-pane fade show active" id="recent" role="tabpanel">
+              <div class="list-group list-group-flush" id="recentContactsList">
+                {% for contact in recent_contacts %} {% set latest_message =
+                get_latest_message_between(current_user.id, contact.id) %}
+                <a
+                  href="{{ url_for('chat_window', recipient=contact.username) }}"
+                  class="list-group-item list-group-item-action"
+                >
+                  <div class="d-flex align-items-center">
+                    <img
+                      src="{{ get_avatar_url(contact.avatar) }}"
+                      class="rounded-circle me-3"
+                      style="width: 40px; height: 40px"
+                      alt="头像"
+                    />
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between">
+                        <h6 class="mb-0">{{ contact.username }}</h6>
+                        <small class="text-muted"
+                          >{{ latest_message.timestamp.strftime('%m-%d %H:%M')
+                          if latest_message.timestamp else '' }}</small
+                        >
+                      </div>
+                      <p class="mb-0 text-muted small">
+                        {{ latest_message.content[:50] }}{% if
+                        latest_message.content|length > 50 %}...{% endif %}
+                      </p>
+                    </div>
+                  </div>
+                </a>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- 我的好友 -->
+            <div class="tab-pane fade" id="friends" role="tabpanel">
+              <div class="list-group list-group-flush" id="friendsList">
+                {% for friend in current_user.followed %} {% if friend.id not in
+                recent_contact_ids %}
+                <a
+                  href="{{ url_for('chat_window', recipient=friend.username) }}"
+                  class="list-group-item list-group-item-action"
+                >
+                  <div class="d-flex align-items-center">
+                    <img
+                      src="{{ get_avatar_url(friend.avatar) }}"
+                      class="rounded-circle me-3"
+                      style="width: 40px; height: 40px"
+                      alt="头像"
+                    />
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between">
+                        <h6 class="mb-0">{{ friend.username }}</h6>
+                        {% set friend_latest_message =
+                        get_latest_message_between(current_user.id, friend.id)
+                        %}
+                        <small class="text-muted"
+                          >{{ friend_latest_message.timestamp.strftime('%m-%d
+                          %H:%M') if friend_latest_message.timestamp else ''
+                          }}</small
+                        >
+                      </div>
+                      {% if friend_latest_message.content %}
+                      <p class="mb-0 text-muted small">
+                        {{ friend_latest_message.content[:50] }}{% if
+                        friend_latest_message.content|length > 50 %}...{% endif
+                        %}
+                      </p>
+                      {% else %}
+                      <p class="mb-0 text-muted small">开始聊天...</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </a>
+                {% endif %} {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <!-- 消息详情区域 -->
+      <div class="card h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="text-center py-5">
+            <i class="fas fa-envelope-open-text fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">选择一个对话开始聊天</h5>
+            <p class="text-muted">从左侧联系人列表中选择一个用户开始聊天</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 搜索联系人功能
+    const searchInput = document.getElementById("searchContacts");
+    searchInput.addEventListener("input", function () {
+      const searchTerm = this.value.toLowerCase();
+
+      // 搜索最近联系人
+      const recentItems = document.querySelectorAll("#recentContactsList a");
+      recentItems.forEach((item) => {
+        const username = item.querySelector("h6").textContent.toLowerCase();
+        if (username.includes(searchTerm)) {
+          item.style.display = "";
+        } else {
+          item.style.display = "none";
+        }
+      });
+
+      // 搜索好友
+      const friendItems = document.querySelectorAll("#friendsList a");
+      friendItems.forEach((item) => {
+        const username = item.querySelector("h6").textContent.toLowerCase();
+        if (username.includes(searchTerm)) {
+          item.style.display = "";
+        } else {
+          item.style.display = "none";
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

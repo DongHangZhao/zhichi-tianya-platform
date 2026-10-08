@@ -1,0 +1,1425 @@
+{% extends "base.html" %} {% block title %}与{{ recipient.username }}聊天 -
+咫尺天涯{% endblock %} {% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <a href="{{ url_for('profile', username=recipient.username) }}">
+              <img
+                src="{{ get_avatar_url(recipient.avatar) }}"
+                class="rounded-circle me-2"
+                style="width: 40px; height: 40px"
+                alt="头像"
+              />
+            </a>
+            <a
+              href="{{ url_for('profile', username=recipient.username) }}"
+              class="text-decoration-none text-dark"
+            >
+              与 {{ recipient.username }} 聊天
+            </a>
+          </h5>
+          <a
+            href="{{ url_for('messages') }}"
+            class="btn btn-sm btn-outline-secondary"
+            >返回消息列表</a
+          >
+        </div>
+
+        <!-- 聊天消息区域 -->
+        <div class="card-body p-0">
+          <div
+            id="chat-messages"
+            class="chat-messages"
+            style="height: 400px; overflow-y: auto; padding: 20px"
+          >
+            {% for message in chat_messages %}
+            <div
+              class="message-bubble {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}"
+              id="msg-{{ message.id }}"
+              data-message-id="{{ message.id }}"
+            >
+              <div
+                class="d-flex {% if message.sender_id == current_user.id %}justify-content-end{% endif %}"
+              >
+                {% if message.sender_id != current_user.id %}
+                <a href="{{ url_for('profile', username=recipient.username) }}">
+                  <img
+                    src="{{ get_avatar_url(recipient.avatar) }}"
+                    class="rounded-circle me-2"
+                    style="width: 30px; height: 30px"
+                    alt="头像"
+                  />
+                </a>
+                {% endif %}
+
+                <div class="message-container">
+                  {% if message.sender_id != current_user.id %}
+                  <div class="fw-bold text-primary">
+                    <a
+                      href="{{ url_for('profile', username=recipient.username) }}"
+                      class="text-decoration-none text-primary"
+                      >{{ recipient.username }}</a
+                    >
+                  </div>
+                  {% endif %} {% if message.content %}
+                  <div
+                    class="message-content bg-light p-2 rounded"
+                    data-message-content
+                    id="msg-content-{{ message.id }}"
+                    oncontextmenu="showMessageContextMenu(event, {{ message.id }}, {{ 'true' if message.sender_id == current_user.id else 'false' }})"
+                  >
+                    <p class="mb-0" data-message-text>{{ message.content }}</p>
+                  </div>
+                  {% endif %} {% if message.attachment_path %}
+                  <div class="attachment-preview bg-light p-2 rounded mt-1">
+                    <strong><i class="fas fa-paperclip me-1"></i>附件:</strong>
+
+                    {% set attachment_url =
+                    get_attachment_url(message.attachment_path) %} {% if
+                    attachment_url %} {% if message.attachment_type == 'image'
+                    %}
+                    <div class="mt-2">
+                      {% if message.attachment_path and
+                      attachment_exists(message.attachment_path) %}
+                      <img
+                        src="{{ attachment_url }}"
+                        class="img-thumbnail"
+                        style="max-width: 200px; cursor: pointer"
+                        alt="图片附件"
+                        onclick="openImageModal(&quot;{{ attachment_url }}&quot;, '图片附件')"
+                      />
+                      {% else %}
+                      <div class="alert alert-warning">附件文件不存在</div>
+                      {% endif %}
+                    </div>
+
+                    {% elif message.attachment_type == 'video' %}
+                    <div class="mt-2">
+                      {% if message.attachment_path and
+                      attachment_exists(message.attachment_path) %}
+                      <video
+                        controls
+                        class="img-thumbnail"
+                        style="max-width: 300px"
+                      >
+                        {% if
+                        message.attachment_filename.lower().endswith('.mov') %}
+                        <source
+                          src="{{ attachment_url }}"
+                          type="video/quicktime"
+                        />
+                        {% elif
+                        message.attachment_filename.lower().endswith('.mp4') %}
+                        <source src="{{ attachment_url }}" type="video/mp4" />
+                        {% elif
+                        message.attachment_filename.lower().endswith('.avi') %}
+                        <source
+                          src="{{ attachment_url }}"
+                          type="video/x-msvideo"
+                        />
+                        {% elif
+                        message.attachment_filename.lower().endswith('.wmv') %}
+                        <source
+                          src="{{ attachment_url }}"
+                          type="video/x-ms-wmv"
+                        />
+                        {% elif
+                        message.attachment_filename.lower().endswith('.mkv') %}
+                        <source
+                          src="{{ attachment_url }}"
+                          type="video/x-matroska"
+                        />
+                        {% elif
+                        message.attachment_filename.lower().endswith('.webm') %}
+                        <source src="{{ attachment_url }}" type="video/webm" />
+                        {% else %}
+                        <source src="{{ attachment_url }}" type="video/mp4" />
+                        {% endif %} 您的浏览器不支持视频播放。
+                      </video>
+                      {% else %}
+                      <div class="alert alert-warning">视频文件不存在</div>
+                      {% endif %}
+                    </div>
+
+                    {% elif message.attachment_type == 'audio' %}
+                    <div class="mt-2">
+                      {% if message.attachment_path and
+                      attachment_exists(message.attachment_path) %}
+                      <audio controls class="w-100">
+                        {% if
+                        message.attachment_filename.lower().endswith('.mp3') %}
+                        <source src="{{ attachment_url }}" type="audio/mpeg" />
+                        {% elif
+                        message.attachment_filename.lower().endswith('.wav') %}
+                        <source src="{{ attachment_url }}" type="audio/wav" />
+                        {% elif
+                        message.attachment_filename.lower().endswith('.ogg') %}
+                        <source src="{{ attachment_url }}" type="audio/ogg" />
+                        {% elif
+                        message.attachment_filename.lower().endswith('.m4a') %}
+                        <source src="{{ attachment_url }}" type="audio/mp4" />
+                        {% else %}
+                        <source src="{{ attachment_url }}" type="audio/mpeg" />
+                        {% endif %} 您的浏览器不支持音频播放。
+                      </audio>
+                      {% else %}
+                      <div class="alert alert-warning">音频文件不存在</div>
+                      {% endif %}
+                    </div>
+
+                    {% else %}
+                    <div class="mt-2">
+                      {% if message.attachment_path and
+                      attachment_exists(message.attachment_path) %}
+                      <a
+                        href="{{ attachment_url }}"
+                        class="btn btn-sm btn-outline-primary"
+                        target="_blank"
+                      >
+                        <i class="fas fa-file me-1"></i>{{
+                        message.attachment_filename }}
+                      </a>
+                      <small class="text-muted">(点击下载)</small>
+                      {% else %}
+                      <div class="alert alert-warning">附件文件不存在</div>
+                      {% endif %}
+                    </div>
+                    {% endif %} {% else %}
+                    <div class="alert alert-warning">无法生成附件链接</div>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+
+                  <small class="text-muted">
+                    {{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                  </small>
+                </div>
+
+                {% if message.sender_id == current_user.id %}
+                <a
+                  href="{{ url_for('profile', username=current_user.username) }}"
+                >
+                  <img
+                    src="{{ get_avatar_url(current_user.avatar) }}"
+                    class="rounded-circle ms-2"
+                    style="width: 30px; height: 30px"
+                    alt="头像"
+                  />
+                </a>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- 发送消息区域 -->
+        <div class="card-footer">
+          {% if current_user.is_following(recipient) and
+          recipient.is_following(current_user) %}
+          <!-- 互相关注，允许发送多条消息 -->
+          <form
+            id="message-form"
+            action="{{ url_for('send_message', recipient_username=recipient.username) }}"
+            method="POST"
+            enctype="multipart/form-data"
+          >
+            {{ form.hidden_tag() }}
+
+            <div class="d-flex">
+              <div class="flex-grow-1 me-2">
+                {{ form.content(class="form-control", placeholder="输入消息...",
+                rows="2") }} {% if form.content.errors %}
+                <div class="text-danger">
+                  {% for error in form.content.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+
+              <div class="d-flex flex-column">
+                <div class="mb-2">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm me-1"
+                    title="发送表情"
+                    onclick="toggleEmojiPicker()"
+                  >
+                    <i class="fas fa-smile"></i>
+                  </button>
+                  <label
+                    for="attachment"
+                    class="btn btn-outline-secondary btn-sm"
+                    title="支持的文件类型: 图片、文档、压缩包(.zip/.rar/.7z/.tar/.gz)、视频等"
+                  >
+                    <i class="fas fa-paperclip"></i>
+                  </label>
+                  {{ form.attachment(id="attachment", style="display: none;") }}
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 附件预览区域 -->
+            <div id="attachment-preview" class="mt-2" style="display: none">
+              <div class="alert alert-info p-2">
+                <small id="preview-content"></small>
+                <button
+                  type="button"
+                  class="btn-close btn-sm float-end"
+                  onclick="removeAttachment()"
+                  aria-label="Close"
+                ></button>
+              </div>
+            </div>
+          </form>
+          {% else %}
+          <!-- 未互相关注，检查是否已有发送过消息 -->
+          {% set sent_to_recipient = sent_to_recipient %} {% set
+          received_from_recipient = received_from_recipient %} {% if
+          sent_to_recipient == 0 or received_from_recipient > 0 %}
+          <!-- 允许发送第一条消息或对方已回复 -->
+          <form
+            id="message-form"
+            action="{{ url_for('send_message', recipient_username=recipient.username) }}"
+            method="POST"
+            enctype="multipart/form-data"
+          >
+            {{ form.hidden_tag() }}
+
+            <div class="d-flex">
+              <div class="flex-grow-1 me-2">
+                {{ form.content(class="form-control", placeholder="输入消息...",
+                rows="2") }} {% if form.content.errors %}
+                <div class="text-danger">
+                  {% for error in form.content.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+
+              <div class="d-flex flex-column">
+                <div class="mb-2">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm me-1"
+                    title="发送表情"
+                    onclick="toggleEmojiPicker()"
+                  >
+                    <i class="fas fa-smile"></i>
+                  </button>
+                  <label
+                    for="attachment"
+                    class="btn btn-outline-secondary btn-sm"
+                    title="支持的文件类型: 图片、文档、压缩包(.zip/.rar/.7z/.tar/.gz)、视频等"
+                  >
+                    <i class="fas fa-paperclip"></i>
+                  </label>
+                  {{ form.attachment(id="attachment", style="display: none;") }}
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 附件预览区域 -->
+            <div id="attachment-preview" class="mt-2" style="display: none">
+              <div class="alert alert-info p-2">
+                <small id="preview-content"></small>
+                <button
+                  type="button"
+                  class="btn-close btn-sm float-end"
+                  onclick="removeAttachment()"
+                  aria-label="Close"
+                ></button>
+              </div>
+            </div>
+          </form>
+          {% else %}
+          <!-- 不允许发送消息，显示提示 -->
+          <div class="alert alert-warning mb-0">
+            <i class="fas fa-exclamation-triangle"></i>
+            您与 {{ recipient.username }}
+            尚未互相关注，且您已发送过消息。请等待对方回复后再继续聊天，或先关注对方。
+          </div>
+          {% endif %} {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .message-bubble {
+    margin-bottom: 15px;
+    display: flex;
+  }
+
+  .sent {
+    justify-content: flex-end;
+  }
+
+  .received {
+    justify-content: flex-start;
+  }
+
+  .message-container {
+    max-width: 70%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sent .message-container {
+    align-items: flex-end;
+  }
+
+  .received .message-container {
+    align-items: flex-start;
+  }
+
+  /* 发送的消息 - 蓝色背景 */
+  .sent .message-content {
+    background-color: #007bff !important;
+    color: white;
+    border-radius: 18px !important;
+    padding: 8px 12px !important;
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+
+  /* 接收的消息 - 白色背景带边框 */
+  .received .message-content {
+    background-color: white !important;
+    border: 1px solid #e0e0e0;
+    border-radius: 18px !important;
+    padding: 8px 12px !important;
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+
+  /* 好友消息背景色 - 绿色 */
+  .received.friend-message .message-content {
+    background-color: #d4edda !important; /* 绿色背景表示好友消息 */
+    border-color: #c3e6cb;
+  }
+
+  /* 关注用户消息背景色 - 蓝色 */
+  .received.followed-message .message-content {
+    background-color: #cce5ff !important; /* 蓝色背景表示关注用户消息 */
+    border-color: #99cfff;
+  }
+
+  .attachment-preview {
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 5px;
+  }
+
+  .chat-typing-indicator {
+    padding: 10px;
+    color: #6c757d;
+    font-style: italic;
+  }
+
+  .chat-messages {
+    background-color: #f8f9fa;
+  }
+</style>
+
+<style>
+  /* 表情包选择器 */
+  .emoji-picker {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    width: 300px;
+    height: 200px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+    z-index: 1000;
+    padding: 10px;
+    overflow-y: auto;
+  }
+
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+  }
+
+  .emoji-item {
+    font-size: 20px;
+    text-align: center;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+  }
+
+  .emoji-item:hover {
+    background-color: #f0f0f0;
+  }
+
+  /* 消息右键菜单 */
+  .context-menu {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+    min-width: 120px;
+  }
+
+  .context-menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .context-menu-item:hover {
+    background-color: #f0f0f0;
+  }
+
+  /* 好友消息背景色 */
+  .received.friend-message .message-content {
+    background-color: #d4edda !important; /* 绿色背景表示好友消息 */
+  }
+
+  /* 关注用户消息背景色 */
+  .received.followed-message .message-content {
+    background-color: #cce5ff !important; /* 蓝色背景表示关注用户消息 */
+  }
+
+  /* 消息编辑输入框 */
+  .edit-message-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    min-height: 60px;
+  }
+</style>
+
+<script>
+    // 表情包数据
+    const emojis = [
+      '😀', '😂', '🤣', '😍', '🥰', '😎', '🤩', '🥳',
+      '😭', '😡', '🤯', '🥶', '😱', '🤠', '🥴', '😷',
+      '❤️', '💖', '✨', '🔥', '🌟', '💯', '👍', '👎',
+      '👏', '🙌', '🐶', '🐱', '🐭', '🐹', '🐰', '🦊'
+    ];
+
+    // 显示表情包选择器
+    window.toggleEmojiPicker = function() {
+      const picker = document.getElementById('emoji-picker');
+      if (picker.style.display === 'block') {
+        picker.style.display = 'none';
+      } else {
+        // 重新生成表情包网格
+        populateEmojiGrid();
+        picker.style.display = 'block';
+      }
+    };
+
+    // 填充表情包网格
+    window.populateEmojiGrid = function() {
+      const emojiGrid = document.getElementById('emoji-grid');
+      emojiGrid.innerHTML = '';
+      emojis.forEach(emoji => {
+        const emojiElement = document.createElement('div');
+        emojiElement.className = 'emoji-item';
+        emojiElement.textContent = emoji;
+        emojiElement.onclick = () => insertEmoji(emoji);
+        emojiGrid.appendChild(emojiElement);
+      });
+    };
+
+    // 插入表情到消息输入框
+    window.insertEmoji = function(emoji) {
+      const contentInput = document.querySelector('#message-form textarea[name="content"]');
+      if (contentInput) {
+        contentInput.value += emoji;
+        contentInput.focus();
+      }
+      // 隐藏表情包选择器
+      document.getElementById('emoji-picker').style.display = 'none';
+    };
+
+    // 消息右键菜单
+    window.showMessageContextMenu = function(event, messageId, isOwnMessage) {
+      event.preventDefault(); // 阻止默认右键菜单
+
+      // 隐藏之前的菜单
+      hideContextMenu();
+
+      const menu = document.createElement('div');
+      menu.className = 'context-menu';
+      menu.id = 'context-menu';
+
+      // 添加菜单项
+      if (isOwnMessage) {
+        // 只有自己发送的消息才能删除
+        const deleteItem = document.createElement('div');
+        deleteItem.className = 'context-menu-item';
+        deleteItem.textContent = '删除消息';
+        deleteItem.onclick = () => deleteMessage(messageId);
+        menu.appendChild(deleteItem);
+      }
+
+      // 添加复制功能
+      const copyItem = document.createElement('div');
+      copyItem.className = 'context-menu-item';
+      copyItem.textContent = '复制消息';
+      copyItem.onclick = () => copyMessage(event.target.closest('.message-content').textContent.trim());
+      menu.appendChild(copyItem);
+
+      // 添加回复功能（未来扩展）
+      const replyItem = document.createElement('div');
+      replyItem.className = 'context-menu-item';
+      replyItem.textContent = '回复消息';
+      replyItem.onclick = () => replyToMessage(messageId);
+      menu.appendChild(replyItem);
+
+      document.body.appendChild(menu);
+
+      // 显示菜单
+      menu.style.display = 'block';
+      menu.style.left = event.pageX + 'px';
+      menu.style.top = event.pageY + 'px';
+
+      // 点击其他地方隐藏菜单
+      document.addEventListener('click', function hideMenu(e) {
+        if (!menu.contains(e.target) && menu.parentNode) {
+          menu.parentNode.removeChild(menu);
+          document.removeEventListener('click', hideMenu);
+        }
+      });
+    };
+
+    // 隐藏右键菜单
+    window.hideContextMenu = function() {
+      const menu = document.getElementById('context-menu');
+      if (menu && menu.parentNode) {
+        menu.parentNode.removeChild(menu);
+      }
+    };
+
+  // 编辑消息功能暂时取消
+    // window.editMessage = function(messageId) {
+    //   const messageElement = document.querySelector(`[data-message-id="${messageId}"] .message-content`);
+    //   if (!messageElement) return;
+    //
+    //   const originalContent = messageElement.querySelector('p').textContent;
+    //   const editInput = document.createElement('textarea');
+    //   editInput.className = 'edit-message-input';
+    //   editInput.value = originalContent;
+    //   editInput.rows = 3;
+    //
+    //   // 保存按钮
+    //   const saveButton = document.createElement('button');
+    //   saveButton.className = 'btn btn-sm btn-success mt-1';
+    //   saveButton.textContent = '保存';
+    //   saveButton.onclick = () => saveEditedMessage(messageId, editInput.value);
+    //
+    //   // 取消按钮
+    //   const cancelButton = document.createElement('button');
+    //   cancelButton.className = 'btn btn-sm btn-secondary mt-1 ms-1';
+    //   cancelButton.textContent = '取消';
+    //   cancelButton.onclick = () => cancelEditMessage(messageElement, originalContent);
+    //
+    //   // 替换内容
+    //   messageElement.innerHTML = '';
+    //   messageElement.appendChild(editInput);
+    //   messageElement.appendChild(saveButton);
+    //   messageElement.appendChild(cancelButton);
+    // }
+
+    // 保存编辑的消息
+    window.saveEditedMessage = async function(messageId, newContent) {
+      try {
+        const response = await fetch(`/api/message/${messageId}/edit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: newContent })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          // 重新加载聊天窗口或更新消息显示
+          location.reload(); // 简单方式：刷新页面
+        } else {
+          alert('编辑失败: ' + data.error);
+        }
+      } catch (error) {
+        console.error('编辑消息时出错:', error);
+        alert('编辑消息时出错');
+      }
+    }
+
+    // 取消编辑消息
+    window.cancelEditMessage = function(messageElement, originalContent) {
+      messageElement.innerHTML = `<p class="mb-0">${originalContent}</p>`;
+    }
+
+    // 删除消息
+    window.deleteMessage = async function(messageId) {
+      if (!confirm('确定要删除这条消息吗？')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/message/${messageId}/delete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          // 刷新页面以确保消息完全消失
+          showNotification('消息删除成功', 'success');
+          setTimeout(() => {
+            location.reload(); // 刷新页面以显示最新状态
+          }, 800);
+        } else {
+          showNotification('删除失败: ' + data.error, 'error');
+        }
+      } catch (error) {
+        console.error('删除消息时出错:', error);
+        showNotification('删除消息时出错', 'error');
+      }
+    }
+
+    // 复制消息
+    window.copyMessage = function(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        // 显示复制成功的提示
+        showNotification('已复制到剪贴板', 'success');
+      }).catch(err => {
+        console.error('复制失败:', err);
+        showNotification('复制失败', 'error');
+      });
+    };
+
+    // 显示通知提示
+    function showNotification(message, type = 'info') {
+      // 检查是否已经有通知在显示
+      const existingNotifications = document.querySelectorAll('.notification-toast');
+      existingNotifications.forEach(notification => {
+        notification.remove();
+      });
+
+      const toast = document.createElement('div');
+      toast.className = `notification-toast ${type}`;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 6px;
+        color: white;
+        font-size: 14px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideInRight 0.3s ease-out;
+        min-width: 200px;
+        text-align: center;
+      `;
+
+      // 设置背景颜色根据类型
+      if (type === 'success') {
+        toast.style.backgroundColor = '#28a745';
+      } else if (type === 'error') {
+        toast.style.backgroundColor = '#dc3545';
+      } else {
+        toast.style.backgroundColor = '#007bff';
+      }
+
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      // 3秒后自动消失
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.style.animation = 'fadeOut 0.5s ease-out';
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.remove();
+            }
+          }, 500);
+        }
+      }, 3000);
+    }
+
+    // 添加CSS动画
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // 回复消息
+    window.replyToMessage = function(messageId) {
+      // 获取要回复的消息内容
+      let messageContent = '';
+
+      // 尝试多种选择器，优先查找带data-message-text属性的元素
+      const selectors = [
+        `[data-message-id="${messageId}"] [data-message-text]`,
+        `[data-message-id="${messageId}"] .message-content [data-message-text]`,
+        `[data-message-id="${messageId}"] .message-content p.mb-0`,
+        `[data-message-id="${messageId}"] .message-content p`,
+        `#msg-${messageId} [data-message-text]`,
+        `#msg-${messageId} .message-content [data-message-text]`,
+        `#msg-${messageId} .message-content p.mb-0`,
+        `#msg-${messageId} .message-content p`,
+        `[data-message-id="${messageId}"] .message-content`,
+        `#msg-${messageId} .message-content`
+      ];
+
+      for (const selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+          messageContent = element.textContent.trim();
+          break;
+        }
+      }
+
+      if (!messageContent) {
+        console.error('找不到要回复的消息');
+        showNotification('无法找到要回复的消息', 'error');
+        return;
+      }
+
+      // 在消息输入框中添加回复标识
+      const contentInput = document.querySelector('#message-form textarea[name="content"]');
+      if (contentInput) {
+        // 如果已有内容，添加换行后再添加回复内容
+        if (contentInput.value) {
+          contentInput.value += '\n> 回复: ' + messageContent.substring(0, 50) + (messageContent.length > 50 ? '...' : '');
+        } else {
+          contentInput.value = '> 回复: ' + messageContent.substring(0, 50) + (messageContent.length > 50 ? '...' : '') + '\n';
+        }
+        contentInput.focus();
+      }
+
+      // 滚动到对应消息的位置
+      const messageElement = document.getElementById(`msg-${messageId}`);
+      if (messageElement) {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // 高亮显示目标消息
+        messageElement.style.transition = 'background-color 0.3s';
+        messageElement.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+        setTimeout(() => {
+          messageElement.style.backgroundColor = '';
+        }, 2000);
+      }
+
+      // 隐藏右键菜单
+      hideContextMenu();
+    };
+
+
+      // 附件预览功能
+      const attachmentElement = document.getElementById("attachment");
+      if (attachmentElement) {
+        attachmentElement.addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const previewDiv = document.getElementById("attachment-preview");
+            const previewContent = document.getElementById("preview-content");
+
+            if (previewDiv && previewContent) {
+              previewContent.innerHTML =
+                '<i class="fas fa-paperclip me-1"></i> 已选择: ' +
+                file.name +
+                " (" +
+                formatFileSize(file.size) +
+                ")";
+              previewDiv.style.display = "block";
+            }
+          }
+        });
+      }
+
+      window.removeAttachment = function() {
+        const attachmentElement = document.getElementById("attachment");
+        const previewDiv = document.getElementById("attachment-preview");
+
+        if (attachmentElement) {
+          attachmentElement.value = "";
+        }
+        if (previewDiv) {
+          previewDiv.style.display = "none";
+        }
+      };
+
+      window.formatFileSize = function(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+      };
+
+      // 图片模态框功能
+      window.openImageModal = function(imageSrc, altText) {
+        // 创建模态框遮罩
+        let modal = document.createElement("div");
+        modal.id = "image-modal";
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.8);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+          cursor: zoom-out;
+        `;
+
+        // 创建图片元素
+        let img = document.createElement("img");
+        img.src = imageSrc;
+        img.alt = altText;
+        img.style.cssText = `
+          max-width: 90%;
+          max-height: 90%;
+          object-fit: contain;
+        `;
+
+        // 添加点击事件关闭模态框
+        modal.appendChild(img);
+        document.body.appendChild(modal);
+
+        modal.addEventListener("click", function () {
+          document.body.removeChild(modal);
+        });
+      };
+
+      // 自动滚动到底部
+      window.scrollToBottom = function() {
+        const chatContainer = document.getElementById("chat-messages");
+        if (chatContainer) {
+          // 使用平滑滚动到最底部
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      };
+
+      // 页面加载完成后滚动到底部
+      document.addEventListener("DOMContentLoaded", function () {
+        // 延迟执行，确保所有内容都已渲染
+        setTimeout(function() {
+          scrollToBottom();
+        }, 100); // 延迟100毫秒以确保DOM完全加载
+      });
+
+      // 处理消息发送表单提交
+      const messageForm = document.getElementById("message-form");
+      if (messageForm) {
+        messageForm.addEventListener("submit", function (e) {
+          // 显示发送状态
+          const submitBtn = messageForm.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发送中...';
+            submitBtn.disabled = true;
+
+            // 发送后重置按钮
+            setTimeout(function () {
+              submitBtn.innerHTML = originalText;
+              submitBtn.disabled = false;
+            }, 3000);
+          }
+        });
+      }
+
+      // 实时更新聊天记录（使用轮询）
+      let lastMessageTimestamp = "{{ chat_messages[-1].timestamp.isoformat() if chat_messages else '' }}";
+      let isPolling = true;
+
+      window.pollNewMessages = function() {
+        if (!isPolling) return;
+
+        // 获取当前页面参数
+        const recipientUsername = {{ recipient.username | tojson }};
+
+        // 使用AJAX获取新消息
+        fetch(`/api/messages/${recipientUsername}?last_timestamp=` + (lastMessageTimestamp || ''))
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data.success && data.messages.length > 0) {
+              const chatContainer = document.getElementById("chat-messages");
+
+              data.messages.forEach(message => {
+                // 创建新消息元素
+                const messageElement = createMessageElement(message);
+                if (messageElement) {
+                  chatContainer.appendChild(messageElement);
+
+                  // 更新最后消息时间戳
+                  if (!lastMessageTimestamp || new Date(message.timestamp) > new Date(lastMessageTimestamp)) {
+                    lastMessageTimestamp = message.timestamp;
+                  }
+                }
+              });
+
+              // 滚动到底部
+              scrollToBottom();
+
+              // 标记消息为已读
+              markMessagesAsRead();
+            }
+          })
+          .catch(error => {
+            console.error('获取新消息失败:', error);
+            // 可能是由于认证问题或网络错误，稍后重试
+          });
+      }
+
+      // 创建消息元素的辅助函数
+      window.createMessageElement = function(message) {
+        // 检查消息是否已存在于页面中
+        if (document.getElementById('msg-' + message.id)) {
+          return null; // 如果已存在，不创建新元素
+        }
+
+        const messageBubble = document.createElement('div');
+        messageBubble.id = 'msg-' + message.id;
+        messageBubble.setAttribute('data-message-id', message.id);
+
+        // 根据发送者与当前用户的关系设置不同的消息背景
+        const currentUserSenderId = {{ current_user.id or 0 | tojson }};
+        let bubbleClass = `message-bubble ${message.sender_id == currentUserSenderId ? 'sent' : 'received'}`;
+
+        // 判断发送者是否是好友（互相关注）或只是被关注
+        if (message.sender_id != currentUserSenderId) {
+          if (message.is_friend) {
+            // 好友消息使用绿色背景
+            bubbleClass += ' friend-message';
+          } else if (message.is_followed) {
+            // 关注用户消息使用蓝色背景
+            bubbleClass += ' followed-message';
+          }
+        }
+
+        messageBubble.className = bubbleClass;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `d-flex ${message.sender_id == currentUserSenderId ? 'justify-content-end' : ''}`;
+
+        // 添加头像
+        if (message.sender_id != currentUserSenderId) {
+          const avatarLink = document.createElement('a');
+          avatarLink.href = `/profile/${message.sender_username}`;
+
+          const avatarImg = document.createElement('img');
+          avatarImg.src = message.sender_avatar_url;
+          avatarImg.className = 'rounded-circle me-2';
+          avatarImg.style.width = '30px';
+          avatarImg.style.height = '30px';
+          avatarImg.alt = '头像';
+
+          avatarLink.appendChild(avatarImg);
+          messageDiv.appendChild(avatarLink);
+        }
+
+        // 消息容器
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'message-container';
+
+        // 发送者名称
+        if (message.sender_id != currentUserSenderId) {
+          const senderName = document.createElement('div');
+          senderName.className = 'fw-bold text-primary';
+
+          const nameLink = document.createElement('a');
+          nameLink.href = `/profile/${message.sender_username}`;
+          nameLink.className = 'text-decoration-none text-primary';
+          nameLink.textContent = message.sender_username;
+
+          senderName.appendChild(nameLink);
+          messageContainer.appendChild(senderName);
+        }
+
+        // 消息内容
+        if (message.content) {
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'message-content bg-light p-2 rounded';
+          contentDiv.setAttribute('data-message-content', '');
+          contentDiv.oncontextmenu = function(event) {
+            showMessageContextMenu(event, message.id, message.sender_id == currentUserSenderId);
+          };
+
+          // 检查是否为回复消息
+          const isReply = message.content.startsWith('> 回复:');
+
+          const contentPara = document.createElement('p');
+          contentPara.className = 'mb-0';
+          contentPara.setAttribute('data-message-text', '');
+
+          if (isReply) {
+            // 分析回复消息并创建可点击的链接
+            const parts = message.content.split('\n');
+            const replyPrefix = parts[0]; // '> 回复: ...'
+            const originalMessage = parts.slice(1).join('\n'); // 原始消息内容
+
+            // 创建回复前缀
+            const replySpan = document.createElement('span');
+            replySpan.textContent = replyPrefix + '\n';
+            replySpan.style.fontStyle = 'italic';
+            replySpan.style.color = '#6c757d';
+
+            // 创建原消息内容
+            const originalSpan = document.createElement('span');
+            originalSpan.textContent = originalMessage;
+
+            // 提取原消息内容用于跳转
+            const originalContent = replyPrefix.substring(5).trim(); // 移除 '> 回复:'
+
+            // 添加点击跳转功能
+            contentDiv.onclick = function() {
+              // 尝试找到对应的原消息
+              const originalMessageElements = document.querySelectorAll('[data-message-content]');
+              for (let elem of originalMessageElements) {
+                const textElement = elem.querySelector('[data-message-text]') || elem.querySelector('p');
+                if (textElement && textElement.textContent.includes(originalContent.replace('...', ''))) {
+                  elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  elem.style.transition = 'background-color 0.3s';
+                  elem.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+                  setTimeout(() => {
+                    elem.style.backgroundColor = '';
+                  }, 2000);
+                  break;
+                }
+              }
+            };
+
+            contentPara.appendChild(replySpan);
+            if (originalMessage) {
+              contentPara.appendChild(originalSpan);
+            }
+          } else {
+            contentPara.textContent = message.content;
+          }
+
+          contentDiv.appendChild(contentPara);
+          messageContainer.appendChild(contentDiv);
+        }
+
+        // 附件处理
+        if (message.attachment_path) {
+          const attachmentDiv = document.createElement('div');
+          attachmentDiv.className = 'attachment-preview bg-light p-2 rounded mt-1';
+
+          // 根据附件类型创建不同的元素
+          if (message.attachment_type === 'image') {
+            // 图片附件
+            const img = document.createElement('img');
+            img.src = message.attachment_url; // 使用预先构建的URL
+            img.className = 'img-thumbnail';
+            img.style.maxWidth = '200px';
+            img.style.cursor = 'pointer';
+            img.alt = '图片附件';
+            img.onclick = function() {
+              openImageModal(message.attachment_url, '图片附件');
+            };
+            attachmentDiv.appendChild(img);
+          } else if (message.attachment_type === 'video') {
+            // 视频附件
+            const video = document.createElement('video');
+            video.controls = true;
+            video.className = 'img-thumbnail';
+            video.style.maxWidth = '300px';
+
+            const source = document.createElement('source');
+            source.src = message.attachment_url; // 使用预先构建的URL
+
+            // 根据文件扩展名设置类型
+            if (message.attachment_filename.toLowerCase().endsWith('.mov')) {
+              source.type = 'video/quicktime';
+            } else if (message.attachment_filename.toLowerCase().endsWith('.mp4')) {
+              source.type = 'video/mp4';
+            } else if (message.attachment_filename.toLowerCase().endsWith('.avi')) {
+              source.type = 'video/x-msvideo';
+            } else if (message.attachment_filename.toLowerCase().endsWith('.wmv')) {
+              source.type = 'video/x-ms-wmv';
+            } else if (message.attachment_filename.toLowerCase().endsWith('.mkv')) {
+              source.type = 'video/x-matroska';
+            } else if (message.attachment_filename.toLowerCase().endsWith('.webm')) {
+              source.type = 'video/webm';
+            } else {
+              source.type = 'video/mp4';
+            }
+
+            video.appendChild(source);
+            video.innerHTML += '您的浏览器不支持视频播放。';
+            attachmentDiv.appendChild(video);
+          } else if (message.attachment_type === 'audio') {
+            // 音频附件
+            const audio = document.createElement('audio');
+            audio.controls = true;
+            audio.className = 'w-100';
+
+            const audioSource = document.createElement('source');
+            audioSource.src = message.attachment_url; // 使用预先构建的URL
+
+            // 根据文件扩展名设置类型
+            if (message.attachment_filename.toLowerCase().endsWith('.mp3')) {
+              audioSource.type = 'audio/mpeg';
+            } else if (message.attachment_filename.toLowerCase().endsWith('.wav')) {
+              audioSource.type = 'audio/wav';
+            } else if (message.attachment_filename.toLowerCase().endsWith('.ogg')) {
+              audioSource.type = 'audio/ogg';
+            } else if (message.attachment_filename.toLowerCase().endsWith('.m4a')) {
+              audioSource.type = 'audio/mp4';
+            } else {
+              audioSource.type = 'audio/mpeg';
+            }
+
+            audio.appendChild(audioSource);
+            audio.innerHTML += '您的浏览器不支持音频播放。';
+            attachmentDiv.appendChild(audio);
+          } else {
+            // 其他类型的附件（文档等）
+            const attachmentLink = document.createElement('a');
+            attachmentLink.href = message.attachment_url; // 使用预先构建的URL
+            attachmentLink.className = 'btn btn-sm btn-outline-primary';
+            attachmentLink.target = '_blank';
+            attachmentLink.innerHTML = '<i class="fas fa-file me-1"></i>' + message.attachment_filename;
+            attachmentDiv.appendChild(attachmentLink);
+            const small = document.createElement('small');
+            small.className = 'text-muted';
+            small.textContent = ' (点击下载)';
+            attachmentDiv.appendChild(small);
+          }
+
+          messageContainer.appendChild(attachmentDiv);
+        }
+
+        // 添加时间戳
+        const timeSpan = document.createElement('small');
+        timeSpan.className = 'text-muted';
+        timeSpan.textContent = message.timestamp_formatted;
+
+        messageContainer.appendChild(timeSpan);
+
+        messageDiv.appendChild(messageContainer);
+
+        // 自己的消息添加头像
+        if (message.sender_id == currentUserSenderId) {
+          const avatarLink = document.createElement('a');
+          avatarLink.href = `/profile/{{ current_user.username | tojson }}`;
+
+          const avatarImg = document.createElement('img');
+          avatarImg.src = {{ get_avatar_url(current_user.avatar) | tojson }};
+          avatarImg.className = 'rounded-circle ms-2';
+          avatarImg.style.width = '30px';
+          avatarImg.style.height = '30px';
+          avatarImg.alt = '头像';
+
+          avatarLink.appendChild(avatarImg);
+          messageDiv.appendChild(avatarLink);
+        }
+
+        messageBubble.appendChild(messageDiv);
+
+        // 触发自定义事件，以便添加回复消息点击处理程序
+        setTimeout(() => {
+          const event = new CustomEvent('messageAdded', { detail: { messageId: message.id }});
+          window.dispatchEvent(event);
+        }, 0);
+
+        return messageBubble;
+      };
+
+      // 每3秒轮询一次新消息，提高轮询频率
+      setInterval(pollNewMessages, 3000);
+
+      // 页面可见性API，优化轮询
+      document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+          isPolling = false;
+        } else {
+          isPolling = true;
+          // 页面回到前台时立即获取最新消息
+          pollNewMessages();
+        }
+      });
+
+      // 实时更新消息已读状态
+      window.markMessagesAsRead = function() {
+        const recipientUsername = {{ recipient.username | tojson }};
+
+        fetch(`/mark_messages_read/${recipientUsername}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log('消息已标记为已读');
+          }
+        })
+        .catch(error => {
+          console.error('标记消息为已读失败:', error);
+        });
+      }
+
+      // 页面加载后标记消息为已读
+      window.addEventListener('load', function() {
+        setTimeout(markMessagesAsRead, 1000); // 延迟1秒执行，确保页面完全加载
+      });
+
+      // 保持用户在线状态 - 在聊天页面也更新用户状态
+      window.keepUserOnline = function() {
+        fetch('/api/update_user_status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({is_online: true})
+        }).then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              console.log('聊天页面用户状态已更新');
+            }
+          })
+          .catch(error => console.error('更新用户状态失败:', error));
+      }
+
+      // 每30秒更新一次用户状态，保持在线
+      keepUserOnline(); // 立即更新一次
+      setInterval(keepUserOnline, 30000); // 每30秒更新一次
+
+      // 页面卸载时更新状态为离线
+      window.addEventListener('beforeunload', function(event) {
+        // 使用navigator.sendBeacon确保在页面卸载时也能发送请求
+        navigator.sendBeacon('/api/set_offline', '');
+      });
+
+      // 初始化表情包选择器
+      window.initEmojiPicker = function() {
+        // 创建表情包选择器
+        const emojiPicker = document.createElement('div');
+        emojiPicker.id = 'emoji-picker';
+        emojiPicker.className = 'emoji-picker';
+        emojiPicker.innerHTML = '<div id="emoji-grid" class="emoji-grid"></div>';
+        document.body.appendChild(emojiPicker);
+
+        // 点击其他地方隐藏表情包
+        document.addEventListener('click', function(e) {
+          const emojiBtn = document.querySelector('.btn-outline-secondary.btn-sm[title="发送表情"]');
+          if (emojiBtn && !emojiBtn.contains(e.target) && !emojiPicker.contains(e.target)) {
+            emojiPicker.style.display = 'none';
+          }
+        });
+      };
+
+      // 页面加载完成后初始化表情包
+      document.addEventListener('DOMContentLoaded', function() {
+        initEmojiPicker();
+        // 确保表情包网格被填充
+        setTimeout(function() {
+          if (window.populateEmojiGrid) {
+            window.populateEmojiGrid();
+          }
+        }, 100); // 延迟100毫秒确保函数完全定义
+
+        // 为所有消息内容添加点击跳转功能（用于回复消息）
+        setTimeout(function() {
+          addReplyClickHandlers();
+        }, 500); // 延迟500毫秒确保所有消息都已加载
+      });
+
+      // 为回复消息添加点击跳转功能
+      function addReplyClickHandlers() {
+        const messageElements = document.querySelectorAll('[data-message-content]');
+        messageElements.forEach(element => {
+          const contentPara = element.querySelector('[data-message-text]') || element.querySelector('p');
+          if (contentPara && contentPara.textContent.startsWith('> 回复:')) {
+            element.style.cursor = 'pointer';
+            element.title = '点击跳转到原消息';
+            element.onclick = function() {
+              // 提取原消息内容
+              const fullText = contentPara.textContent;
+              const parts = fullText.split('\n');
+              if (parts.length > 0) {
+                let originalContent = parts[0]; // '> 回复: ...'
+                originalContent = originalContent.substring(5).trim(); // 移除 '> 回复: '
+                originalContent = originalContent.replace('...', ''); // 移除省略号
+
+                // 尝试找到对应的原消息
+                const allMessageElements = document.querySelectorAll('[data-message-content]');
+                let found = false;
+                for (let elem of allMessageElements) {
+                  const textElement = elem.querySelector('[data-message-text]') || elem.querySelector('p');
+                  if (textElement && textElement.textContent &&
+                      (textElement.textContent.includes(originalContent) ||
+                       textElement.textContent.startsWith(originalContent))) {
+                    elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    elem.style.transition = 'background-color 0.3s';
+                    elem.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+                    setTimeout(() => {
+                      elem.style.backgroundColor = '';
+                    }, 2000);
+                    found = true;
+                    break;
+                  }
+                }
+
+                if (!found) {
+                  // 如果在当前页面未找到，可能需要从服务器获取更多消息
+                  showNotification('未找到原消息', 'info');
+                }
+              }
+            };
+          }
+        });
+      }
+
+      // 当新消息被添加时，也要添加点击处理程序
+      window.addEventListener('messageAdded', function(e) {
+        setTimeout(function() {
+          addReplyClickHandlers();
+        }, 100);
+      });
+</script>
+{% endblock %}

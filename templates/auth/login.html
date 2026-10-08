@@ -1,0 +1,120 @@
+{% extends "base.html" %} {% block title %}登录 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow-lg">
+        <div class="card-header text-center py-4">
+          <h3 class="mb-0">
+            <i class="fas fa-sign-in-alt text-primary"></i> 登录
+          </h3>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+              {{ form.username.label(class="form-label") }} {{
+              form.username(class="form-control" + (" is-invalid" if
+              form.username.errors else "")) }} {% if form.username.errors %}
+              <div class="invalid-feedback">
+                {% for error in form.username.errors %} {{ error }} {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              {{ form.password.label(class="form-label") }} {{
+              form.password(class="form-control" + (" is-invalid" if
+              form.password.errors else "")) }} {% if form.password.errors %}
+              <div class="invalid-feedback">
+                {% for error in form.password.errors %} {{ error }} {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3 form-check">
+              {{ form.remember_me(class="form-check-input") }} {{
+              form.remember_me.label(class="form-check-label") }}
+            </div>
+
+            <!-- 验证码区域 -->
+            <div class="mb-3">
+              <div class="row">
+                <div class="col-md-7">
+                  {{ form.captcha.label(class="form-label") }} {{
+                  form.captcha(class="form-control" + (" is-invalid" if
+                  form.captcha.errors else ""), placeholder="请输入验证码") }}
+                  {% if form.captcha.errors %}
+                  <div class="invalid-feedback">
+                    {% for error in form.captcha.errors %} {{ error }} {% endfor
+                    %}
+                  </div>
+                  {% endif %}
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label">&nbsp;</label>
+                  <div class="d-flex align-items-center h-100">
+                    <img
+                      id="captcha-img"
+                      src="{{ url_for('captcha') }}"
+                      alt="验证码"
+                      class="img-fluid"
+                      style="cursor: pointer; height: 40px"
+                      title="点击刷新验证码"
+                      onclick="refreshCaptcha()"
+                    />
+                    <span
+                      id="refresh-btn"
+                      class="ms-2"
+                      style="cursor: pointer"
+                      title="刷新验证码"
+                      onclick="refreshCaptcha()"
+                    >
+                      <i class="fas fa-sync-alt"></i>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg">登录</button>
+            </div>
+          </form>
+
+          <div class="text-center mt-3">
+            <p>还没有账号？ <a href="{{ url_for('register') }}">立即注册</a></p>
+            <p>
+              <a
+                href="{{ url_for('password.forgot_password') }}"
+                class="text-muted"
+                ><i class="fas fa-key"></i> 忘记密码？</a
+              >
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function refreshCaptcha() {
+    const captchaImg = document.getElementById("captcha-img");
+    // 添加时间戳防止缓存
+    captchaImg.src = "{{ url_for('captcha') }}?t=" + new Date().getTime();
+  }
+
+  // 如果验证码输入框失去焦点，验证输入的验证码是否正确
+  document.addEventListener("DOMContentLoaded", function () {
+    const captchaInput = document.querySelector("#captcha");
+    if (captchaInput) {
+      captchaInput.addEventListener("blur", function () {
+        // 这里可以添加实时验证逻辑（需要后端API支持）
+      });
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,430 @@
+{% extends "base.html" %} {% block title %}管理员面板 - 咫尺天涯{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3><i class="fas fa-crown text-warning"></i> 管理员面板</h3>
+        <div>
+          <a
+            href="{{ url_for('admin_users') }}"
+            class="btn btn-outline-primary btn-sm me-1"
+            ><i class="fas fa-users"></i> 用户管理</a
+          >
+          <a
+            href="{{ url_for('admin_content') }}"
+            class="btn btn-outline-success btn-sm me-1"
+            ><i class="fas fa-newspaper"></i> 内容管理</a
+          >
+          <a
+            href="{{ url_for('admin_test') }}"
+            class="btn btn-outline-info btn-sm me-1"
+            ><i class="fas fa-flask"></i> 测试面板</a
+          >
+          <a
+            href="/dbadmin/"
+            class="btn btn-outline-warning btn-sm"
+            target="_blank"
+            ><i class="fas fa-database"></i> 数据库管理</a
+          >
+        </div>
+      </div>
+      <hr />
+    </div>
+  </div>
+
+  <!-- 统计卡片 -->
+  <div class="row mb-4">
+    <div class="col-md-2">
+      <div class="card text-center border-primary">
+        <div class="card-body py-3">
+          <i class="fas fa-users fa-2x text-primary mb-2"></i>
+          <h4 class="mb-0">{{ users|length }}</h4>
+          <small class="text-muted">总用户数</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card text-center border-success">
+        <div class="card-body py-3">
+          <i class="fas fa-comments fa-2x text-success mb-2"></i>
+          <h4 class="mb-0">{{ posts|length }}</h4>
+          <small class="text-muted">帖子数量</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card text-center border-info">
+        <div class="card-body py-3">
+          <i class="fas fa-newspaper fa-2x text-info mb-2"></i>
+          <h4 class="mb-0">{{ news_list|length }}</h4>
+          <small class="text-muted">新闻数量</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card text-center border-danger">
+        <div class="card-body py-3">
+          <i class="fas fa-video fa-2x text-danger mb-2"></i>
+          <h4 class="mb-0">{{ videos|length }}</h4>
+          <small class="text-muted">视频数量</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card text-center border-secondary">
+        <div class="card-body py-3">
+          <i class="fas fa-comment fa-2x text-secondary mb-2"></i>
+          <h4 class="mb-0">{{ comments|length }}</h4>
+          <small class="text-muted">评论总数</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card text-center border-warning">
+        <div class="card-body py-3">
+          <i class="fas fa-ban fa-2x text-warning mb-2"></i>
+          <h4 class="mb-0">
+            {{ users|selectattr('is_banned', 'equalto', true)|list|length }}
+          </h4>
+          <small class="text-muted">被封用户</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- 最新用户 -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <i class="fas fa-users text-primary"></i> 最新用户
+          </h5>
+          <a
+            href="{{ url_for('admin_users') }}"
+            class="btn btn-sm btn-outline-primary"
+            >查看全部</a
+          >
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>用户</th>
+                <th>邮箱</th>
+                <th>角色</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users[:8] %}
+              <tr>
+                <td>
+                  <img
+                    src="{{ get_avatar_url(user.avatar) }}"
+                    class="rounded-circle me-1"
+                    style="width: 24px; height: 24px"
+                    alt=""
+                  />
+                  {{ user.username }}
+                </td>
+                <td><small>{{ user.email }}</small></td>
+                <td>
+                  {% if user.is_admin %}<span class="badge bg-warning"
+                    >管理员</span
+                  >
+                  {% else %}<span class="badge bg-secondary">用户</span>{% endif
+                  %}
+                </td>
+                <td>
+                  {% if user.is_banned %}<span class="badge bg-danger"
+                    >封禁</span
+                  >
+                  {% else %}<span class="badge bg-success">正常</span>{% endif
+                  %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 最新帖子 -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <i class="fas fa-comments text-success"></i> 最新帖子
+          </h5>
+          <a
+            href="{{ url_for('admin_content') }}"
+            class="btn btn-sm btn-outline-success"
+            >查看全部</a
+          >
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>作者</th>
+                <th>赞</th>
+                <th>评论</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for post in posts[:8] %}
+              <tr>
+                <td>
+                  <a
+                    href="{{ url_for('post_detail', post_id=post.id) }}"
+                    class="text-decoration-none"
+                    >{{ post.title[:30] }}{% if post.title|length > 30 %}...{%
+                    endif %}</a
+                  >
+                </td>
+                <td>
+                  <small
+                    >{{ post.author.username if post.author else '未知'
+                    }}</small
+                  >
+                </td>
+                <td>{{ post.likes_count }}</td>
+                <td>{{ post.comments_count }}</td>
+              </tr>
+              {% endfor %} {% if not posts %}
+              <tr>
+                <td colspan="4" class="text-center text-muted">暂无帖子</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- 最新新闻 -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <i class="fas fa-newspaper text-info"></i> 最新新闻
+          </h5>
+          <a
+            href="{{ url_for('admin_content') }}"
+            class="btn btn-sm btn-outline-info"
+            >查看全部</a
+          >
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>来源</th>
+                <th>浏览</th>
+                <th>赞</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for news in news_list[:8] %}
+              <tr>
+                <td>
+                  <a
+                    href="{{ url_for('news_detail', news_id=news.id) }}"
+                    class="text-decoration-none"
+                    >{{ news.title[:30] }}{% if news.title|length > 30 %}...{%
+                    endif %}</a
+                  >
+                </td>
+                <td><small>{{ news.source or '未知' }}</small></td>
+                <td>{{ news.views }}</td>
+                <td>{{ news.likes_count }}</td>
+              </tr>
+              {% endfor %} {% if not news_list %}
+              <tr>
+                <td colspan="4" class="text-center text-muted">暂无新闻</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 最新视频 -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <i class="fas fa-video text-danger"></i> 最新视频
+          </h5>
+          <a
+            href="{{ url_for('admin_content') }}"
+            class="btn btn-sm btn-outline-danger"
+            >查看全部</a
+          >
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>上传者</th>
+                <th>浏览</th>
+                <th>赞</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for video in videos[:8] %}
+              <tr>
+                <td>
+                  <a
+                    href="{{ url_for('video_detail', video_id=video.id) }}"
+                    class="text-decoration-none"
+                    >{{ video.title[:30] }}{% if video.title|length > 30 %}...{%
+                    endif %}</a
+                  >
+                </td>
+                <td>
+                  <small
+                    >{{ video.uploader.username if video.uploader else '未知'
+                    }}</small
+                  >
+                </td>
+                <td>{{ video.views }}</td>
+                <td>{{ video.likes_count }}</td>
+              </tr>
+              {% endfor %} {% if not videos %}
+              <tr>
+                <td colspan="4" class="text-center text-muted">暂无视频</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快捷操作 -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-bolt text-warning"></i> 快捷操作
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-2">
+              <button
+                class="btn btn-outline-primary w-100"
+                onclick="fetchNewsNow()"
+              >
+                <i class="fas fa-sync-alt"></i> 立即抓取新闻
+              </button>
+            </div>
+            <div class="col-md-3 mb-2">
+              <a
+                href="/dbadmin/"
+                class="btn btn-outline-warning w-100"
+                target="_blank"
+              >
+                <i class="fas fa-database"></i> Flask-Admin 数据库管理
+              </a>
+            </div>
+            <div class="col-md-3 mb-2">
+              <a
+                href="{{ url_for('admin_test') }}"
+                class="btn btn-outline-info w-100"
+              >
+                <i class="fas fa-flask"></i> 功能测试面板
+              </a>
+            </div>
+            <div class="col-md-3 mb-2">
+              <button class="btn btn-outline-success w-100" onclick="testDB()">
+                <i class="fas fa-heartbeat"></i> 检测数据库状态
+              </button>
+            </div>
+          </div>
+          <div id="quickActionResult" class="mt-3" style="display: none">
+            <div class="alert" id="quickActionAlert"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showResult(msg, type) {
+    var el = document.getElementById("quickActionResult");
+    var alert = document.getElementById("quickActionAlert");
+    el.style.display = "block";
+    alert.className = "alert alert-" + type;
+    alert.innerHTML = msg;
+  }
+
+  function fetchNewsNow() {
+    showResult(
+      '<i class="fas fa-spinner fa-spin"></i> 正在抓取新闻...',
+      "info"
+    );
+    fetch('{{ url_for("admin_fetch_news_now") }}', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        showResult(d.message, d.success ? "success" : "danger");
+      })
+      .catch((e) => {
+        showResult("请求失败: " + e, "danger");
+      });
+  }
+
+  function testDB() {
+    showResult('<i class="fas fa-spinner fa-spin"></i> 正在检测...', "info");
+    fetch('{{ url_for("admin_test_db") }}')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) {
+          var s = d.stats;
+          showResult(
+            "数据库正常 | 用户:" +
+              s.users +
+              " 帖子:" +
+              s.posts +
+              " 新闻:" +
+              s.news +
+              " 视频:" +
+              s.videos +
+              " 评论:" +
+              s.comments,
+            "success"
+          );
+        } else {
+          showResult(d.message, "danger");
+        }
+      })
+      .catch((e) => {
+        showResult("请求失败: " + e, "danger");
+      });
+  }
+</script>
+{% endblock %}

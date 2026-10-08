@@ -1,0 +1,188 @@
+{% extends "base.html" %} {% block title %}搜索结果 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-8">
+      <h2 class="mb-4">
+        <i class="fas fa-search text-primary"></i> 搜索结果
+        <small class="text-muted">"{{ query }}"</small>
+      </h2>
+
+      {% if results %}
+      <div class="alert alert-info">找到 {{ results|length }} 个相关结果</div>
+
+      {% for result in results %}
+      <div class="card mb-3">
+        <div class="card-body">
+          {% if result.type == 'user' %}
+          <h5 class="card-title">
+            <i class="fas fa-user text-primary"></i>
+            <a
+              href="{{ url_for('profile', username=result.data.username) }}"
+              class="text-decoration-none"
+            >
+              {{ result.display_name }}
+            </a>
+          </h5>
+          <p class="card-text text-muted">{{ result.detail }}</p>
+
+          {% elif result.type == 'news' %}
+          <div class="row g-0">
+            {% if result.data.image_url %}
+            <div class="col-md-3">
+              <img
+                src="{{ result.data.image_url }}"
+                class="img-fluid rounded"
+                style="max-height: 120px; object-fit: cover"
+                alt="{{ result.data.title }}"
+              />
+            </div>
+            <div class="col-md-9">
+              {% else %}
+              <div class="col-md-12">
+                {% endif %}
+                <h5 class="card-title">
+                  <i class="fas fa-newspaper text-danger"></i>
+                  <a
+                    href="{{ url_for('news_detail', news_id=result.data.id) }}"
+                    class="text-decoration-none"
+                  >
+                    {{ result.display_name }}
+                  </a>
+                </h5>
+                <p class="card-text text-muted">{{ result.detail }}</p>
+                {% if result.data.summary %}
+                <p class="card-text">{{ result.data.summary }}</p>
+                {% endif %}
+              </div>
+            </div>
+
+            {% elif result.type == 'post' %}
+            <h5 class="card-title">
+              <i class="fas fa-sticky-note text-info"></i>
+              <a
+                href="{{ url_for('post_detail', post_id=result.data.id) }}"
+                class="text-decoration-none"
+              >
+                {{ result.display_name }}
+              </a>
+            </h5>
+            <p class="card-text text-muted">{{ result.detail }}</p>
+            {% if result.data.content %}
+            <p class="card-text">
+              {{ result.data.content[:100] }}{% if result.data.content|length >
+              100 %}...{% endif %}
+            </p>
+            {% endif %} {% elif result.type == 'video' %}
+            <h5 class="card-title">
+              <i class="fas fa-video text-warning"></i>
+              <a
+                href="{{ url_for('video_detail', video_id=result.data.id) }}"
+                class="text-decoration-none"
+              >
+                {{ result.display_name }}
+              </a>
+            </h5>
+            <p class="card-text text-muted">{{ result.detail }}</p>
+            {% if result.data.description %}
+            <p class="card-text">
+              {{ result.data.description[:100] }}{% if
+              result.data.description|length > 100 %}...{% endif %}
+            </p>
+            {% endif %} {% endif %}
+          </div>
+        </div>
+        {% endfor %} {% else %}
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i> 没有找到与 "{{ query }}" 相关的结果
+        </div>
+        {% endif %}
+
+        <div class="mt-4">
+          <a href="{{ url_for('index') }}" class="btn btn-secondary">
+            <i class="fas fa-home"></i> 返回首页
+          </a>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-filter text-info"></i> 搜索筛选
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="btn-group-vertical w-100" role="group">
+              <a
+                href="{{ url_for('search', q=query, type='all') }}"
+                class="btn {% if search_type == 'all' %}btn-primary active{% else %}btn-outline-primary{% endif %}"
+              >
+                <i class="fas fa-globe-americas"></i> 全部
+              </a>
+              <a
+                href="{{ url_for('search', q=query, type='user') }}"
+                class="btn {% if search_type == 'user' %}btn-primary active{% else %}btn-outline-primary{% endif %}"
+              >
+                <i class="fas fa-user"></i> 用户
+              </a>
+              <a
+                href="{{ url_for('search', q=query, type='news') }}"
+                class="btn {% if search_type == 'news' %}btn-primary active{% else %}btn-outline-primary{% endif %}"
+              >
+                <i class="fas fa-newspaper"></i> 新闻
+              </a>
+              <a
+                href="{{ url_for('search', q=query, type='post') }}"
+                class="btn {% if search_type == 'post' %}btn-primary active{% else %}btn-outline-primary{% endif %}"
+              >
+                <i class="fas fa-sticky-note"></i> 帖子
+              </a>
+              <a
+                href="{{ url_for('search', q=query, type='video') }}"
+                class="btn {% if search_type == 'video' %}btn-primary active{% else %}btn-outline-primary{% endif %}"
+              >
+                <i class="fas fa-video"></i> 视频
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-calendar-alt text-success"></i> 按日期搜索新闻
+            </h5>
+          </div>
+          <div class="card-body">
+            <form action="{{ url_for('calendar') }}" method="get">
+              <div class="mb-3">
+                <label for="search-date" class="form-label"
+                  >选择日期查看新闻</label
+                >
+                <input
+                  type="date"
+                  class="form-control"
+                  id="search-date"
+                  name="date"
+                  value="{{ today.strftime('%Y-%m-%d') if today else '' }}"
+                />
+              </div>
+              <button type="submit" class="btn btn-success w-100">
+                <i class="fas fa-calendar-day"></i> 查看当日新闻
+              </button>
+            </form>
+            <hr />
+            <a
+              href="{{ url_for('calendar') }}"
+              class="btn btn-outline-info w-100 mt-2"
+            >
+              <i class="fas fa-calendar"></i> 新闻日历
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endblock %}
+</div>

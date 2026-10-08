@@ -1,0 +1,68 @@
+{% extends "base.html" %} {% block title %}内容修改历史 - 咫尺天涯{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h4 class="mb-0">
+            <i class="fas fa-history text-primary"></i> 内容修改历史
+          </h4>
+          <a
+            href="{{ url_for('profile', username=current_user.username) }}"
+            class="btn btn-secondary"
+            >返回</a
+          >
+        </div>
+        <div class="card-body">
+          {% if histories %}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>用户</th>
+                  <th>内容类型</th>
+                  <th>字段</th>
+                  <th>修改前</th>
+                  <th>修改后</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for history in histories %}
+                <tr>
+                  <td>{{ history.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                  <td>{{ history.user.username }}</td>
+                  <td>
+                    {{ '帖子' if history.content_type == 'post' else '视频' }}
+                  </td>
+                  <td>{{ history.field_name }}</td>
+                  <td>
+                    {{ history.old_value[:50] if history.old_value else '无'
+                    }}{% if history.old_value and history.old_value|length > 50
+                    %}...{% endif %}
+                  </td>
+                  <td>
+                    {{ history.new_value[:50] if history.new_value else '无'
+                    }}{% if history.new_value and history.new_value|length > 50
+                    %}...{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <p class="text-muted">暂无修改历史</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

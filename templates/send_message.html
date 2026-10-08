@@ -1,0 +1,53 @@
+{% extends "base.html" %} {% block title %}发送消息 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">
+            <i class="fas fa-paper-plane text-primary"></i> 发送消息给 {{
+            recipient }}
+          </h4>
+        </div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+              {{ form.content.label(class="form-label") }} {{
+              form.content(class="form-control", rows="6",
+              placeholder="输入您的消息...") }} {% if form.content.errors %}
+              <div class="invalid-feedback">
+                {% for error in form.content.errors %} {{ error }} {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              {{ form.attachment.label(class="form-label") }} {{
+              form.attachment(class="form-control") }}
+              <div class="form-text">支持图片、文档、压缩包和视频文件</div>
+              {% if form.attachment.errors %}
+              <div class="invalid-feedback">
+                {% for error in form.attachment.errors %} {{ error }} {% endfor
+                %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a
+                href="{{ url_for('messages') }}"
+                class="btn btn-secondary me-md-2"
+                >取消</a
+              >
+              <button type="submit" class="btn btn-primary">发送消息</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

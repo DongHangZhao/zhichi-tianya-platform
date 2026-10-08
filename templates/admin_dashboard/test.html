@@ -1,0 +1,387 @@
+{% extends "base.html" %} {% block title %}功能测试面板 - 管理员面板{% endblock
+%} {% block content %}
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-flask text-info"></i> 功能测试面板</h3>
+    <div>
+      <a href="{{ url_for('admin') }}" class="btn btn-outline-secondary btn-sm"
+        ><i class="fas fa-arrow-left"></i> 返回面板</a
+      >
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- 系统检测 -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fas fa-heartbeat"></i> 系统检测</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <button class="btn btn-outline-primary" onclick="runTest('db')">
+              <i class="fas fa-database"></i> 测试数据库连接
+            </button>
+            <button class="btn btn-outline-primary" onclick="runTest('routes')">
+              <i class="fas fa-route"></i> 测试所有路由
+            </button>
+            <button class="btn btn-outline-primary" onclick="runTest('system')">
+              <i class="fas fa-server"></i> 查看系统信息
+            </button>
+          </div>
+          <div id="systemResult" class="mt-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新闻服务测试 -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0"><i class="fas fa-newspaper"></i> 新闻服务测试</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <button
+              class="btn btn-outline-success"
+              onclick="runTest('scraper')"
+            >
+              <i class="fas fa-spider"></i> 测试新闻抓取器
+            </button>
+            <button class="btn btn-outline-success" onclick="runTest('fetch')">
+              <i class="fas fa-download"></i> 立即抓取新闻
+            </button>
+          </div>
+          <div id="newsResult" class="mt-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API 接口测试 -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0"><i class="fas fa-plug"></i> API 接口测试</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <button
+              class="btn btn-outline-warning"
+              onclick="testAPI('/api/users', 'apiResult')"
+            >
+              <i class="fas fa-users"></i> GET /api/users
+            </button>
+            <button
+              class="btn btn-outline-warning"
+              onclick="testAPI('/api/trending/daily', 'apiResult')"
+            >
+              <i class="fas fa-fire"></i> GET /api/trending/daily
+            </button>
+            <button
+              class="btn btn-outline-warning"
+              onclick="testAPI('/api/update_user_status', 'apiResult', 'POST')"
+            >
+              <i class="fas fa-signal"></i> POST /api/update_user_status
+            </button>
+          </div>
+          <div id="apiResult" class="mt-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 页面加载测试 -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-tachometer-alt"></i> 页面加载测试
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <button class="btn btn-outline-info" onclick="testPageLoad('/')">
+              <i class="fas fa-home"></i> 测试首页加载
+            </button>
+            <button
+              class="btn btn-outline-info"
+              onclick="testPageLoad('/news')"
+            >
+              <i class="fas fa-newspaper"></i> 测试新闻页加载
+            </button>
+            <button
+              class="btn btn-outline-info"
+              onclick="testPageLoad('/videos')"
+            >
+              <i class="fas fa-video"></i> 测试视频页加载
+            </button>
+            <button
+              class="btn btn-outline-info"
+              onclick="testPageLoad('/trending')"
+            >
+              <i class="fas fa-fire"></i> 测试热度页加载
+            </button>
+          </div>
+          <div id="pageResult" class="mt-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 测试结果面板 -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> 测试日志</h5>
+          <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()">
+            清空日志
+          </button>
+        </div>
+        <div class="card-body">
+          <div
+            id="testLog"
+            style="
+              max-height: 400px;
+              overflow-y: auto;
+              font-family: monospace;
+              font-size: 13px;
+              background: #1e1e1e;
+              color: #d4d4d4;
+              padding: 15px;
+              border-radius: 8px;
+            "
+          >
+            <div class="text-muted">等待测试...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var logEl = document.getElementById("testLog");
+  function log(msg, type) {
+    type = type || "info";
+    var colors = {
+      info: "#569cd6",
+      success: "#6a9955",
+      error: "#f44747",
+      warn: "#dcdcaa",
+    };
+    var time = new Date().toLocaleTimeString();
+    var firstChild = logEl.querySelector(".text-muted");
+    if (firstChild && firstChild.textContent === "等待测试...")
+      logEl.innerHTML = "";
+    logEl.innerHTML +=
+      '<div style="color:' +
+      colors[type] +
+      '">[' +
+      time +
+      "] " +
+      msg +
+      "</div>";
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function clearLog() {
+    logEl.innerHTML = '<div class="text-muted">等待测试...</div>';
+  }
+
+  function showBox(id, html, cls) {
+    document.getElementById(id).innerHTML =
+      '<div class="alert alert-' + cls + ' small mb-0">' + html + "</div>";
+  }
+
+  function runTest(type) {
+    var urls = {
+      db: '{{ url_for("admin_test_db") }}',
+      routes: '{{ url_for("admin_test_routes") }}',
+      system: '{{ url_for("admin_system_info") }}',
+      scraper: '{{ url_for("admin_test_news_scraper") }}',
+      fetch: '{{ url_for("admin_fetch_news_now") }}',
+    };
+    var targetId =
+      type === "scraper" || type === "fetch" ? "newsResult" : "systemResult";
+    var method = type === "fetch" ? "POST" : "GET";
+
+    log("开始测试: " + type + "...", "info");
+    showBox(
+      targetId,
+      '<i class="fas fa-spinner fa-spin"></i> 测试中...',
+      "info"
+    );
+
+    fetch(urls[type], {
+      method: method,
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (type === "routes") {
+          log("路由总数: " + d.total, "success");
+          var html = "<strong>共 " + d.total + " 个路由</strong><br>";
+          d.routes.slice(0, 10).forEach(function (r) {
+            html +=
+              "<small>" +
+              r.methods.join(",") +
+              " " +
+              r.url +
+              " → " +
+              r.endpoint +
+              "</small><br>";
+          });
+          if (d.total > 10)
+            html += "<small>...还有 " + (d.total - 10) + " 个路由</small>";
+          showBox(targetId, html, "success");
+        } else if (type === "db") {
+          var s = d.stats;
+          log(
+            "数据库连接: " + (d.success ? "正常" : "异常"),
+            d.success ? "success" : "error"
+          );
+          showBox(
+            targetId,
+            d.message +
+              "<br>用户:" +
+              s.users +
+              " 帖子:" +
+              s.posts +
+              " 新闻:" +
+              s.news +
+              " 视频:" +
+              s.videos +
+              " 评论:" +
+              s.comments,
+            d.success ? "success" : "danger"
+          );
+        } else if (type === "system") {
+          log("系统信息获取成功", "success");
+          var i = d.info;
+          showBox(
+            targetId,
+            "Python: " +
+              i.python_version.split(" ")[0] +
+              "<br>平台: " +
+              i.platform +
+              "<br>Debug: " +
+              i.flask_debug +
+              "<br>数据库: " +
+              i.database,
+            "info"
+          );
+        } else {
+          log(d.message, d.success ? "success" : "error");
+          showBox(targetId, d.message, d.success ? "success" : "danger");
+        }
+      })
+      .catch(function (e) {
+        log("测试失败: " + e, "error");
+        showBox(targetId, "请求失败: " + e, "danger");
+      });
+  }
+
+  function testAPI(url, targetId, method) {
+    method = method || "GET";
+    log("测试API: " + method + " " + url, "info");
+    showBox(
+      targetId,
+      '<i class="fas fa-spinner fa-spin"></i> 请求中...',
+      "info"
+    );
+    var start = Date.now();
+
+    fetch(url, {
+      method: method,
+      headers: { "Content-Type": "application/json" },
+    })
+      .then(function (r) {
+        var elapsed = Date.now() - start;
+        var status = r.status;
+        return r.text().then(function (text) {
+          log(
+            "API " + url + " → 状态:" + status + " 耗时:" + elapsed + "ms",
+            status < 400 ? "success" : "error"
+          );
+          try {
+            var data = JSON.parse(text);
+            showBox(
+              targetId,
+              "<strong>" +
+                method +
+                " " +
+                url +
+                "</strong><br>状态: " +
+                status +
+                " | 耗时: " +
+                elapsed +
+                "ms<br><small>" +
+                JSON.stringify(data).substring(0, 200) +
+                "...</small>",
+              status < 400 ? "success" : "warning"
+            );
+          } catch (e) {
+            showBox(
+              targetId,
+              "<strong>" +
+                method +
+                " " +
+                url +
+                "</strong><br>状态: " +
+                status +
+                " | 耗时: " +
+                elapsed +
+                "ms<br><small>非JSON响应</small>",
+              "warning"
+            );
+          }
+        });
+      })
+      .catch(function (e) {
+        log("API请求失败: " + e, "error");
+        showBox(targetId, "请求失败: " + e, "danger");
+      });
+  }
+
+  function testPageLoad(url) {
+    log("测试页面加载: " + url, "info");
+    var targetId = "pageResult";
+    showBox(
+      targetId,
+      '<i class="fas fa-spinner fa-spin"></i> 加载中...',
+      "info"
+    );
+    var start = Date.now();
+
+    fetch(url)
+      .then(function (r) {
+        var elapsed = Date.now() - start;
+        log(
+          "页面 " + url + " → 状态:" + r.status + " 耗时:" + elapsed + "ms",
+          r.status === 200 ? "success" : "error"
+        );
+        var cls =
+          elapsed < 500 ? "success" : elapsed < 2000 ? "warning" : "danger";
+        var speed = elapsed < 500 ? "快速" : elapsed < 2000 ? "一般" : "较慢";
+        showBox(
+          targetId,
+          "<strong>" +
+            url +
+            "</strong> | 状态: " +
+            r.status +
+            " | 耗时: " +
+            elapsed +
+            "ms | 速度: " +
+            speed,
+          cls
+        );
+      })
+      .catch(function (e) {
+        log("页面加载失败: " + e, "error");
+        showBox(targetId, "加载失败: " + e, "danger");
+      });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,427 @@
+{% extends 'admin/master.html' %} {% block body %}
+<style>
+  .dashboard-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  }
+
+  .stat-card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .stat-card:hover::before {
+    left: 100%;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .stat-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    animation: bounce 2s ease infinite;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 10px 0;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  .data-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .data-card:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px);
+  }
+
+  .data-card .card-header {
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    border-bottom: 2px solid #e9ecef;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .data-card .card-header h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .data-item {
+    display: block;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
+    color: inherit;
+  }
+
+  .data-item:hover {
+    background: linear-gradient(90deg, #f8f9ff 0%, #f0f4ff 100%);
+    padding-left: 25px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .data-item:last-child {
+    border-bottom: none;
+  }
+
+  .data-item:hover .text-dark {
+    color: #667eea !important;
+  }
+
+  @keyframes bounce {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-in {
+    animation: fadeInUp 0.6s ease forwards;
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  .bg-gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  }
+  .bg-gradient-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+  .bg-gradient-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+  .bg-gradient-danger {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  }
+  .bg-gradient-purple {
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+  }
+</style>
+
+<div class="container-fluid">
+  <!-- 页面标题 -->
+  <div class="dashboard-header text-center">
+    <h1 class="mb-2"><i class="fas fa-chart-line"></i> 数据概览仪表盘</h1>
+    <p class="mb-0 opacity-90">实时查看平台运营数据和最新动态</p>
+  </div>
+
+  <!-- 统计卡片 -->
+  <div class="row mb-5">
+    <div
+      class="col-lg-2 col-md-4 col-sm-6 mb-4 animate-in"
+      style="animation-delay: 0.1s"
+    >
+      <a href="{{ url_for('user.index_view') }}" class="text-decoration-none">
+        <div class="card stat-card bg-gradient-primary text-white h-100">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-users stat-icon"></i>
+            <div class="stat-number">{{ total_users }}</div>
+            <div class="stat-label">
+              <i class="fas fa-external-link-alt me-1"></i>用户管理
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div
+      class="col-lg-2 col-md-4 col-sm-6 mb-4 animate-in"
+      style="animation-delay: 0.2s"
+    >
+      <a href="{{ url_for('post.index_view') }}" class="text-decoration-none">
+        <div class="card stat-card bg-gradient-success text-white h-100">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-edit stat-icon"></i>
+            <div class="stat-number">{{ total_posts }}</div>
+            <div class="stat-label">
+              <i class="fas fa-external-link-alt me-1"></i>动态管理
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div
+      class="col-lg-2 col-md-4 col-sm-6 mb-4 animate-in"
+      style="animation-delay: 0.3s"
+    >
+      <a href="{{ url_for('video.index_view') }}" class="text-decoration-none">
+        <div class="card stat-card bg-gradient-info text-white h-100">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-video stat-icon"></i>
+            <div class="stat-number">{{ total_videos }}</div>
+            <div class="stat-label">
+              <i class="fas fa-external-link-alt me-1"></i>视频管理
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div
+      class="col-lg-2 col-md-4 col-sm-6 mb-4 animate-in"
+      style="animation-delay: 0.4s"
+    >
+      <a href="{{ url_for('news.index_view') }}" class="text-decoration-none">
+        <div class="card stat-card bg-gradient-warning text-white h-100">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-newspaper stat-icon"></i>
+            <div class="stat-number">{{ total_news }}</div>
+            <div class="stat-label">
+              <i class="fas fa-external-link-alt me-1"></i>新闻管理
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div
+      class="col-lg-2 col-md-4 col-sm-6 mb-4 animate-in"
+      style="animation-delay: 0.5s"
+    >
+      <a
+        href="{{ url_for('comment.index_view') }}"
+        class="text-decoration-none"
+      >
+        <div class="card stat-card bg-gradient-danger text-white h-100">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-comments stat-icon"></i>
+            <div class="stat-number">{{ total_comments }}</div>
+            <div class="stat-label">
+              <i class="fas fa-external-link-alt me-1"></i>评论管理
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div
+      class="col-lg-2 col-md-4 col-sm-6 mb-4 animate-in"
+      style="animation-delay: 0.6s"
+    >
+      <a
+        href="{{ url_for('message.index_view') }}"
+        class="text-decoration-none"
+      >
+        <div class="card stat-card bg-gradient-purple text-white h-100">
+          <div class="card-body text-center py-4">
+            <i class="fas fa-envelope stat-icon"></i>
+            <div class="stat-number">{{ total_messages }}</div>
+            <div class="stat-label">
+              <i class="fas fa-external-link-alt me-1"></i>私信管理
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 最新动态 -->
+  <div class="row">
+    <div class="col-lg-4 mb-4">
+      <div class="card data-card h-100">
+        <div class="card-header">
+          <h5>
+            <i class="fas fa-user-plus text-primary me-2"></i> 最新注册用户
+          </h5>
+          <a
+            href="{{ url_for('user.index_view') }}"
+            class="btn btn-sm btn-outline-primary float-end"
+          >
+            <i class="fas fa-list me-1"></i>查看全部
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_users %}
+          <div class="list-group list-group-flush">
+            {% for user in recent_users %}
+            <a
+              href="{{ url_for('user.edit_view', id=user.id) }}"
+              class="data-item text-decoration-none"
+            >
+              <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                  <img
+                    src="{{ get_avatar_url(user.avatar) }}"
+                    alt="{{ user.username }}"
+                    class="rounded-circle"
+                    style="
+                      width: 45px;
+                      height: 45px;
+                      object-fit: cover;
+                      border: 2px solid #e9ecef;
+                    "
+                  />
+                </div>
+                <div class="flex-grow-1 ms-3">
+                  <div class="fw-bold text-dark">{{ user.username }}</div>
+                  <small class="text-muted"
+                    ><i class="fas fa-envelope me-1"></i>{{ user.email }}</small
+                  >
+                </div>
+                <div class="flex-shrink-0">
+                  <i class="fas fa-chevron-right text-muted"></i>
+                </div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-inbox fa-3x mb-3"></i>
+            <p>暂无用户数据</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+      <div class="card data-card h-100">
+        <div class="card-header">
+          <h5><i class="fas fa-newspaper text-warning me-2"></i> 最新新闻</h5>
+          <a
+            href="{{ url_for('news.index_view') }}"
+            class="btn btn-sm btn-outline-warning float-end"
+          >
+            <i class="fas fa-list me-1"></i>查看全部
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_news %}
+          <div class="list-group list-group-flush">
+            {% for news in recent_news %}
+            <a
+              href="{{ url_for('news.edit_view', id=news.id) }}"
+              class="data-item text-decoration-none"
+            >
+              <div class="fw-bold text-dark text-truncate">
+                <i class="fas fa-file-alt text-warning me-2"></i>{{ news.title
+                or '无标题' }}
+              </div>
+              <small class="text-muted">
+                <i class="fas fa-eye me-1"></i>{{ news.views or 0 }}
+                <span class="mx-2">|</span>
+                <i class="fas fa-clock me-1"></i>{{
+                news.timestamp.strftime('%m-%d %H:%M') if news.timestamp else
+                '未知' }}
+              </small>
+              <div class="mt-1">
+                <span class="badge bg-info">{{ news.source or '资讯' }}</span>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-inbox fa-3x mb-3"></i>
+            <p>暂无新闻数据</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+      <div class="card data-card h-100">
+        <div class="card-header">
+          <h5><i class="fas fa-edit text-success me-2"></i> 最新动态</h5>
+          <a
+            href="{{ url_for('post.index_view') }}"
+            class="btn btn-sm btn-outline-success float-end"
+          >
+            <i class="fas fa-list me-1"></i>查看全部
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_posts %}
+          <div class="list-group list-group-flush">
+            {% for post in recent_posts %}
+            <a
+              href="{{ url_for('post.edit_view', id=post.id) }}"
+              class="data-item text-decoration-none"
+            >
+              <div class="fw-bold text-dark text-truncate">
+                <i class="fas fa-file-alt text-success me-2"></i>{{ post.title
+                or '无标题' }}
+              </div>
+              <small class="text-muted">
+                <i class="fas fa-eye me-1"></i>{{ post.views or 0 }}
+                <span class="mx-2">|</span>
+                <i class="fas fa-clock me-1"></i>{{
+                post.timestamp.strftime('%m-%d %H:%M') if post.timestamp else
+                '未知' }}
+              </small>
+              <div class="mt-1">
+                <span class="badge bg-success"
+                  >{{ post.category or '动态' }}</span
+                >
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="fas fa-inbox fa-3x mb-3"></i>
+            <p>暂无动态数据</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %} {% block title %}编辑资料 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">
+            <i class="fas fa-cog text-primary"></i> 编辑个人资料
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 想要修改密码？
+            <a
+              href="{{ url_for('password.change_password') }}"
+              class="alert-link"
+              >点击这里修改密码</a
+            >
+          </div>
+          <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="row">
+              <div class="col-md-8">
+                <div class="mb-3">
+                  {{ form.username.label(class="form-label") }} {{
+                  form.username(class="form-control" + (" is-invalid" if
+                  form.username.errors else "")) }} {% if form.username.errors
+                  %}
+                  <div class="invalid-feedback">
+                    {% for error in form.username.errors %} {{ error }} {%
+                    endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+
+                <div class="mb-3">
+                  {{ form.email.label(class="form-label") }} {{
+                  form.email(class="form-control" + (" is-invalid" if
+                  form.email.errors else "")) }} {% if form.email.errors %}
+                  <div class="invalid-feedback">
+                    {% for error in form.email.errors %} {{ error }} {% endfor
+                    %}
+                  </div>
+                  {% endif %}
+                </div>
+
+                <div class="mb-3">
+                  {{ form.bio.label(class="form-label") }} {{
+                  form.bio(class="form-control", rows="4",
+                  placeholder="介绍一下自己吧...") }}
+                </div>
+
+                <div class="mb-3">
+                  {{ form.location.label(class="form-label") }} {{
+                  form.location(class="form-control", placeholder="所在地区") }}
+                </div>
+
+                <div class="mb-3">
+                  {{ form.website.label(class="form-label") }} {{
+                  form.website(class="form-control", placeholder="个人网站") }}
+                </div>
+              </div>
+
+              <div class="col-md-4 text-center">
+                <div class="mb-3">
+                  <img
+                    src="{{ get_avatar_url(current_user.avatar) }}"
+                    class="rounded-circle mb-2"
+                    style="width: 120px; height: 120px; object-fit: cover"
+                    alt="当前头像"
+                  />
+                  <p class="text-muted small">当前头像</p>
+                </div>
+
+                <div class="mb-3">
+                  {{ form.avatar.label(class="form-label") }} {{
+                  form.avatar(class="form-control") }}
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a
+                href="{{ url_for('profile', username=current_user.username) }}"
+                class="btn btn-secondary me-md-2"
+                >取消</a
+              >
+              <button type="submit" class="btn btn-primary">保存更改</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

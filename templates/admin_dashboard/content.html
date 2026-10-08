@@ -1,0 +1,358 @@
+{% extends "base.html" %} {% block title %}内容管理 - 管理员面板{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-newspaper text-success"></i> 内容管理</h3>
+    <div>
+      <a href="{{ url_for('admin') }}" class="btn btn-outline-secondary btn-sm"
+        ><i class="fas fa-arrow-left"></i> 返回面板</a
+      >
+      <a href="/dbadmin/" class="btn btn-outline-warning btn-sm" target="_blank"
+        ><i class="fas fa-database"></i> 数据库管理</a
+      >
+    </div>
+  </div>
+
+  <!-- Tab 导航 -->
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-bs-toggle="tab" href="#postsTab"
+        ><i class="fas fa-comments"></i> 帖子
+        <span class="badge bg-success">{{ posts|length }}</span></a
+      >
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#newsTab"
+        ><i class="fas fa-newspaper"></i> 新闻
+        <span class="badge bg-info">{{ news_list|length }}</span></a
+      >
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#videosTab"
+        ><i class="fas fa-video"></i> 视频
+        <span class="badge bg-danger">{{ videos|length }}</span></a
+      >
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#commentsTab"
+        ><i class="fas fa-comment"></i> 评论
+        <span class="badge bg-secondary">{{ comments|length }}</span></a
+      >
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- 帖子管理 -->
+    <div class="tab-pane fade show active" id="postsTab">
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>标题</th>
+                  <th>作者</th>
+                  <th>时间</th>
+                  <th>赞</th>
+                  <th>评论</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for post in posts %}
+                <tr>
+                  <td>{{ post.id }}</td>
+                  <td>
+                    <a
+                      href="{{ url_for('post_detail', post_id=post.id) }}"
+                      class="text-decoration-none"
+                      >{{ post.title[:40] }}{% if post.title|length > 40 %}...{%
+                      endif %}</a
+                    >
+                  </td>
+                  <td>{{ post.author.username if post.author else '未知' }}</td>
+                  <td>
+                    <small
+                      >{{ post.timestamp.strftime('%Y-%m-%d %H:%M') if
+                      post.timestamp else '' }}</small
+                    >
+                  </td>
+                  <td>{{ post.likes_count }}</td>
+                  <td>{{ post.comments_count }}</td>
+                  <td>
+                    <form
+                      action="{{ url_for('admin_delete_post', post_id=post.id) }}"
+                      method="POST"
+                      style="display: inline"
+                      onsubmit="return confirm('确定删除此帖子？')"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                      >
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %} {% if not posts %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-3">
+                    暂无帖子
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新闻管理 -->
+    <div class="tab-pane fade" id="newsTab">
+      <div class="card">
+        <div class="card-header">
+          <button class="btn btn-sm btn-primary" onclick="fetchNewsNow()">
+            <i class="fas fa-sync-alt"></i> 立即抓取新闻
+          </button>
+          <span id="newsActionMsg" class="ms-2"></span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>标题</th>
+                  <th>来源</th>
+                  <th>时间</th>
+                  <th>浏览</th>
+                  <th>赞</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for news in news_list %}
+                <tr>
+                  <td>{{ news.id }}</td>
+                  <td>
+                    <a
+                      href="{{ url_for('news_detail', news_id=news.id) }}"
+                      class="text-decoration-none"
+                      >{{ news.title[:40] }}{% if news.title|length > 40 %}...{%
+                      endif %}</a
+                    >
+                  </td>
+                  <td><small>{{ news.source or '未知' }}</small></td>
+                  <td>
+                    <small
+                      >{{ news.timestamp.strftime('%Y-%m-%d %H:%M') if
+                      news.timestamp else '' }}</small
+                    >
+                  </td>
+                  <td>{{ news.views }}</td>
+                  <td>{{ news.likes_count }}</td>
+                  <td>
+                    <form
+                      action="{{ url_for('admin_delete_news', news_id=news.id) }}"
+                      method="POST"
+                      style="display: inline"
+                      onsubmit="return confirm('确定删除此新闻？')"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                      >
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %} {% if not news_list %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-3">
+                    暂无新闻
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 视频管理 -->
+    <div class="tab-pane fade" id="videosTab">
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>标题</th>
+                  <th>上传者</th>
+                  <th>时间</th>
+                  <th>浏览</th>
+                  <th>赞</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for video in videos %}
+                <tr>
+                  <td>{{ video.id }}</td>
+                  <td>
+                    <a
+                      href="{{ url_for('video_detail', video_id=video.id) }}"
+                      class="text-decoration-none"
+                      >{{ video.title[:40] }}{% if video.title|length > 40
+                      %}...{% endif %}</a
+                    >
+                  </td>
+                  <td>
+                    {{ video.uploader.username if video.uploader else '未知' }}
+                  </td>
+                  <td>
+                    <small
+                      >{{ video.timestamp.strftime('%Y-%m-%d %H:%M') if
+                      video.timestamp else '' }}</small
+                    >
+                  </td>
+                  <td>{{ video.views }}</td>
+                  <td>{{ video.likes_count }}</td>
+                  <td>
+                    <form
+                      action="{{ url_for('delete_video', video_id=video.id) }}"
+                      method="POST"
+                      style="display: inline"
+                      onsubmit="return confirm('确定删除此视频？')"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                      >
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %} {% if not videos %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-3">
+                    暂无视频
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 评论管理 -->
+    <div class="tab-pane fade" id="commentsTab">
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>内容</th>
+                  <th>作者</th>
+                  <th>关联</th>
+                  <th>时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for comment in comments %}
+                <tr>
+                  <td>{{ comment.id }}</td>
+                  <td>
+                    {{ comment.content[:60] }}{% if comment.content|length > 60
+                    %}...{% endif %}
+                  </td>
+                  <td>
+                    {{ comment.author.username if comment.author else '未知' }}
+                  </td>
+                  <td>
+                    {% if comment.post_id %}<span class="badge bg-success"
+                      >帖子#{{ comment.post_id }}</span
+                    >
+                    {% elif comment.news_id %}<span class="badge bg-info"
+                      >新闻#{{ comment.news_id }}</span
+                    >
+                    {% elif comment.video_id %}<span class="badge bg-danger"
+                      >视频#{{ comment.video_id }}</span
+                    >
+                    {% endif %}
+                  </td>
+                  <td>
+                    <small
+                      >{{ comment.timestamp.strftime('%Y-%m-%d %H:%M') if
+                      comment.timestamp else '' }}</small
+                    >
+                  </td>
+                  <td>
+                    <form
+                      action="{{ url_for('admin_delete_comment', comment_id=comment.id) }}"
+                      method="POST"
+                      style="display: inline"
+                      onsubmit="return confirm('确定删除此评论？')"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                      >
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %} {% if not comments %}
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-3">
+                    暂无评论
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function fetchNewsNow() {
+    var msg = document.getElementById("newsActionMsg");
+    msg.innerHTML =
+      '<span class="text-info"><i class="fas fa-spinner fa-spin"></i> 正在抓取...</span>';
+    fetch('{{ url_for("admin_fetch_news_now") }}', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        msg.innerHTML =
+          '<span class="text-' +
+          (d.success ? "success" : "danger") +
+          '">' +
+          d.message +
+          "</span>";
+        if (d.success) setTimeout(() => location.reload(), 2000);
+      })
+      .catch((e) => {
+        msg.innerHTML = '<span class="text-danger">请求失败</span>';
+      });
+  }
+</script>
+{% endblock %}

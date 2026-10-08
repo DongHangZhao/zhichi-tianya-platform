@@ -1,0 +1,191 @@
+{% extends "base.html" %} {% block title %}热度排行 - 咫尺天涯{% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+          <i class="fas fa-fire text-danger"></i> 热度排行榜
+          <span class="badge bg-danger">{{ period or '每日' }}</span>
+        </h2>
+        <div class="btn-group" role="group">
+          <a
+            href="{{ url_for('trending_daily') }}"
+            class="btn btn-outline-primary {% if period == 'daily' %}active{% endif %}"
+            >每日</a
+          >
+          <a
+            href="{{ url_for('trending_weekly') }}"
+            class="btn btn-outline-secondary {% if period == 'weekly' %}active{% endif %}"
+            >每周</a
+          >
+          <a
+            href="{{ url_for('trending_monthly') }}"
+            class="btn btn-outline-info {% if period == 'monthly' %}active{% endif %}"
+            >每月</a
+          >
+        </div>
+      </div>
+
+      {% if trending_items %}
+      <div class="row">
+        {% for item_data in trending_items %} {% set item = item_data.item %} {%
+        set rank = loop.index %}
+        <div class="col-md-12 mb-4">
+          <div class="card trending-item-card">
+            <div class="row g-0 align-items-center">
+              <div class="col-auto pe-3">
+                <div
+                  class="rank-badge d-flex align-items-center justify-content-center {% if rank <= 3 %}rank-top{% else %}rank-normal{% endif %}"
+                  style="
+                    min-width: 50px;
+                    height: 50px;
+                    border-radius: 50%;
+                    font-size: 1.2em;
+                    font-weight: bold;
+                  "
+                >
+                  {{ rank }}
+                </div>
+              </div>
+              <div class="col">
+                <div class="card-body p-3">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h5 class="card-title mb-1">
+                        {% if item_data.type == 'news' %}
+                        <i class="fas fa-newspaper text-primary"></i>
+                        <a
+                          href="{{ url_for('news_detail', news_id=item.id) }}"
+                          class="text-decoration-none"
+                        >
+                          {{ item.title }}
+                        </a>
+                        {% elif item_data.type == 'post' %}
+                        <i class="fas fa-sticky-note text-success"></i>
+                        <a
+                          href="{{ url_for('post_detail', post_id=item.id) }}"
+                          class="text-decoration-none"
+                        >
+                          {{ item.title }}
+                        </a>
+                        {% elif item_data.type == 'video' %}
+                        <i class="fas fa-video text-warning"></i>
+                        <a
+                          href="{{ url_for('video_detail', video_id=item.id) }}"
+                          class="text-decoration-none"
+                        >
+                          {{ item.title }}
+                        </a>
+                        {% endif %}
+                      </h5>
+                      <p class="card-text text-muted small mb-1">
+                        {% if item_data.type == 'news' %}
+                        <i class="fas fa-source"></i> 来源: {{ item.source or
+                        '未知' }} | {% elif item_data.type == 'post' %}
+                        <i class="fas fa-user"></i> 作者:
+                        <a
+                          href="{{ url_for('profile', username=item.author.username) }}"
+                          class="text-decoration-none"
+                        >
+                          {{ item.author.username }}
+                        </a>
+                        | {% elif item_data.type == 'video' %}
+                        <i class="fas fa-user"></i> 上传者:
+                        <a
+                          href="{{ url_for('profile', username=item.uploader.username) }}"
+                          class="text-decoration-none"
+                        >
+                          {{ item.uploader.username }}
+                        </a>
+                        | {% endif %}
+                        <i class="fas fa-clock"></i>
+                        {{ item.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                      </p>
+                      <p class="card-text mb-2">
+                        {{ item.summary or item.content[:100] + "..." if
+                        item.content and item.content|length > 100 else
+                        item.content or '暂无简介' }}
+                      </p>
+                    </div>
+                    <div class="text-end">
+                      <div
+                        class="trending-score badge bg-warning text-dark mb-2"
+                      >
+                        热度: {{ "%.1f"|format(item_data.score or
+                        item.get_trending_score()) }}
+                      </div>
+                      <div class="stats-small">
+                        <span class="me-2" title="点赞数">
+                          <i class="fas fa-heart text-danger"></i>
+                          {{ item.likes_count or 0 }}
+                        </span>
+                        <span class="me-2" title="浏览数">
+                          <i class="fas fa-eye text-info"></i>
+                          {{ item.views or 0 }}
+                        </span>
+                        <span title="评论数">
+                          <i class="fas fa-comment text-success"></i>
+                          {{ item.comments_count or 0 }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle"></i> 暂无热度排行数据，今天还没有发布内容
+      </div>
+      <div class="text-center mt-3">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+          <i class="fas fa-home"></i> 返回首页发布内容
+        </a>
+        <a href="{{ url_for('news') }}" class="btn btn-outline-secondary ms-2">
+          <i class="fas fa-newspaper"></i> 查看新闻
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .trending-item-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .trending-item-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .rank-top {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: white;
+  }
+
+  .rank-normal {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    color: white;
+  }
+
+  .trending-score {
+    font-size: 0.9em;
+    padding: 0.3em 0.6em;
+  }
+
+  .stats-small span {
+    font-size: 0.85em;
+  }
+
+  .trending-item-card .card-body {
+    padding: 1rem !important;
+  }
+</style>
+{% endblock %}

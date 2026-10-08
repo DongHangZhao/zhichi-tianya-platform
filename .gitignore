@@ -1,0 +1,49 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ---------- 数据库（含真实用户数据与密码哈希，禁止提交）----------
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# ---------- 用户上传文件（体积大 + 隐私）----------
+static/uploads/*
+!static/uploads/.gitkeep
+!static/uploads/*/
+!static/uploads/*/.gitkeep
+downloads/
+
+# ---------- 环境变量与密钥 ----------
+.env
+.env.*
+!.env.example
+
+# ---------- 开发期遗留脚本 / 备份（不进仓库，保留在本地即可）----------
+*_old.py
+*副本*
+temp_*.py
+fix_*.py
+app_clean.py
+complete_app.py
+temp_app.py
+admin_panel_old.py
+
+# ---------- IDE / 系统 ----------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+*.log

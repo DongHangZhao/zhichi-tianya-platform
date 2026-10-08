@@ -1,0 +1,359 @@
+{% extends "base.html" %} {% block title %}新闻搜索结果 - 咫尺天涯{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-8">
+      <h2 class="mb-4">
+        <i class="fas fa-search text-primary"></i> 新闻搜索结果
+        <small class="text-muted">"{{ query }}"</small>
+      </h2>
+
+      {% if news_results %}
+      <div class="alert alert-info">
+        找到 {{ news_results|length }} 篇相关新闻
+      </div>
+
+      {% for news in news_results %}
+      <div class="card mb-4 news-card shadow-sm">
+        {% if news.image_url %}
+        <div class="row g-0">
+          <div class="col-md-4">
+            <img
+              src="{{ news.image_url }}"
+              class="img-fluid rounded-start h-100 object-fit-cover"
+              alt="{{ news.title }}"
+              style="min-height: 200px; max-height: 300px"
+              onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200/cccccc/666666?text=图片加载失败';"
+            />
+          </div>
+          <div class="col-md-8">
+            <div class="card-body">
+              <h5 class="card-title">
+                <a
+                  href="{{ url_for('news_detail', news_id=news.id) }}"
+                  class="text-decoration-none text-dark"
+                >
+                  {{ news.title }}
+                </a>
+              </h5>
+              <p class="card-text text-muted">
+                <small
+                  >{{ news.summary or news.content[:100] + "..." if
+                  news.content|length > 100 else news.content }}</small
+                >
+              </p>
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                  <i class="fas fa-clock"></i>
+                  {{ news.timestamp.strftime('%Y-%m-%d %H:%M') }} |
+                  <i class="fas fa-source"></i> {{ news.source or '未知来源' }}
+                </small>
+                <div class="news-stats">
+                  <span class="me-3">
+                    <i class="fas fa-eye"></i> {{ news.views or 0 }}
+                  </span>
+                  <span class="me-3">
+                    <i class="fas fa-heart text-danger"></i>
+                    <span id="likes-count-{{ news.id }}"
+                      >{{ news.likes_count or 0 }}</span
+                    >
+                  </span>
+                  <span>
+                    <i class="fas fa-comment"></i>
+                    {{ news.comments_count or 0 }}
+                  </span>
+                </div>
+              </div>
+              {% if current_user.is_authenticated %}
+              <div class="mt-2">
+                <button
+                  class="btn btn-sm btn-outline-danger like-btn"
+                  data-news-id="{{ news.id }}"
+                >
+                  <i class="fas fa-heart"></i>
+                  {% if current_user.is_authenticated and
+                  news.is_liked_by(current_user) %} 取消喜欢 {% else %} 喜欢 {%
+                  endif %}
+                </button>
+                <a
+                  href="{{ url_for('news_detail', news_id=news.id) }}#comments"
+                  class="btn btn-sm btn-outline-primary"
+                >
+                  <i class="fas fa-comment"></i> 评论
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="card-body">
+          <h5 class="card-title">
+            <a
+              href="{{ url_for('news_detail', news_id=news.id) }}"
+              class="text-decoration-none text-dark"
+            >
+              {{ news.title }}
+            </a>
+          </h5>
+          <p class="card-text text-muted">
+            <small
+              >{{ news.summary or news.content[:150] + "..." if
+              news.content|length > 150 else news.content }}</small
+            >
+          </p>
+          <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+              <i class="fas fa-clock"></i>
+              {{ news.timestamp.strftime('%Y-%m-%d %H:%M') }} |
+              <i class="fas fa-source"></i> {{ news.source or '未知来源' }}
+            </small>
+            <div class="news-stats">
+              <span class="me-3">
+                <i class="fas fa-eye"></i> {{ news.views or 0 }}
+              </span>
+              <span class="me-3">
+                <i class="fas fa-heart text-danger"></i>
+                <span id="likes-count-{{ news.id }}"
+                  >{{ news.likes_count or 0 }}</span
+                >
+              </span>
+              <span>
+                <i class="fas fa-comment"></i>
+                {{ news.comments_count or 0 }}
+              </span>
+            </div>
+          </div>
+          {% if current_user.is_authenticated %}
+          <div class="mt-2">
+            <button
+              class="btn btn-sm btn-outline-danger like-btn"
+              data-news-id="{{ news.id }}"
+            >
+              <i class="fas fa-heart"></i>
+              {% if current_user.is_authenticated and
+              news.is_liked_by(current_user) %} 取消喜欢 {% else %} 喜欢 {%
+              endif %}
+            </button>
+            <a
+              href="{{ url_for('news_detail', news_id=news.id) }}#comments"
+              class="btn btn-sm btn-outline-primary"
+            >
+              <i class="fas fa-comment"></i> 评论
+            </a>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <!-- 分页 -->
+      {% if news_results|length > 10 %}
+      <nav aria-label="新闻搜索结果分页">
+        <ul class="pagination justify-content-center">
+          <li class="page-item">
+            <a class="page-link" href="#" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item">
+            <a class="page-link" href="#" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %} {% else %}
+      <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle fa-2x mb-3"></i>
+        <h5>未找到相关新闻</h5>
+        <p class="mb-0">关键词 "{{ query }}" 在新闻中未找到匹配内容</p>
+      </div>
+      {% endif %}
+
+      <div class="mt-4">
+        <a href="{{ url_for('news') }}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> 返回新闻首页
+        </a>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- 搜索框 -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-search text-info"></i> 搜索新闻</h5>
+        </div>
+        <div class="card-body">
+          <form action="{{ url_for('search') }}" method="get">
+            <input type="hidden" name="type" value="news" />
+            <div class="input-group">
+              <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="输入新闻关键词..."
+                value="{{ query }}"
+                required
+              />
+              <button class="btn btn-outline-secondary" type="submit">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 按日期搜索 -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-calendar-day text-success"></i> 按日期查看
+          </h5>
+        </div>
+        <div class="card-body">
+          <form id="date-search-form">
+            <div class="mb-3">
+              <label for="search-date" class="form-label">选择日期</label>
+              <input
+                type="date"
+                class="form-control"
+                id="search-date"
+                name="date"
+                value="{{ today.strftime('%Y-%m-%d') if today else '' }}"
+              />
+            </div>
+            <button
+              type="button"
+              class="btn btn-success w-100"
+              id="search-by-date"
+            >
+              <i class="fas fa-search"></i> 搜索当日新闻
+            </button>
+          </form>
+          <hr />
+          <a
+            href="{{ url_for('calendar') }}"
+            class="btn btn-outline-info w-100"
+          >
+            <i class="fas fa-calendar-alt"></i> 新闻日历
+          </a>
+        </div>
+      </div>
+
+      <!-- 热门新闻 -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="fas fa-fire text-danger"></i> 热门新闻</h5>
+        </div>
+        <div class="card-body">
+          {% set hot_news = get_hot_news(5) %} {% if hot_news %} {% for news in
+          hot_news %}
+          <div class="d-flex mb-3">
+            <div class="flex-shrink-0">
+              {% if news.image_url %}
+              <img
+                src="{{ news.image_url }}"
+                class="img-fluid rounded"
+                style="width: 60px; height: 60px; object-fit: cover"
+                alt="{{ news.title }}"
+                onerror="this.onerror=null; this.src='https://via.placeholder.com/60x60/cccccc/666666?text=N';"
+              />
+              {% else %}
+              <div
+                class="bg-light d-flex align-items-center justify-content-center rounded"
+                style="width: 60px; height: 60px"
+              >
+                <i class="fas fa-newspaper text-muted"></i>
+              </div>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1 ms-2">
+              <h6 class="mb-0 small">
+                <a
+                  href="{{ url_for('news_detail', news_id=news.id) }}"
+                  class="text-decoration-none text-dark"
+                >
+                  {{ news.title[:30] }}{% if news.title|length > 30 %}...{%
+                  endif %}
+                </a>
+              </h6>
+              <small class="text-muted d-block">
+                <i class="fas fa-heart"></i> {{ news.likes_count }} |
+                <i class="fas fa-eye"></i> {{ news.views }}
+              </small>
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <p class="text-muted text-center mb-0">暂无热门新闻</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 新闻点赞功能
+  document.addEventListener("DOMContentLoaded", function () {
+    const likeButtons = document.querySelectorAll(".like-btn");
+
+    likeButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const newsId = this.getAttribute("data-news-id");
+
+        fetch(`/like_news/${newsId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // 更新点赞数显示
+              const likesCountElement = document.getElementById(
+                `likes-count-${newsId}`
+              );
+              likesCountElement.textContent = data.likes_count;
+
+              // 切换按钮文本和样式
+              const icon = this.querySelector("i");
+              if (data.liked) {
+                this.innerHTML =
+                  '<i class="fas fa-heart text-danger"></i> 取消喜欢';
+                icon.classList.add("text-danger");
+              } else {
+                this.innerHTML = '<i class="fas fa-heart"></i> 喜欢';
+                icon.classList.remove("text-danger");
+              }
+            } else {
+              alert("操作失败，请稍后重试");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("操作失败，请稍后重试");
+          });
+      });
+    });
+
+    // 日期搜索功能
+    document
+      .getElementById("search-by-date")
+      .addEventListener("click", function () {
+        const selectedDate = document.getElementById("search-date").value;
+        if (selectedDate) {
+          window.location.href = `/news/date/${selectedDate}`;
+        } else {
+          alert("请选择一个日期");
+        }
+      });
+  });
+</script>
+{% endblock %}

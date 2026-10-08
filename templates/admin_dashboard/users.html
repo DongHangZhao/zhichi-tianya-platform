@@ -1,0 +1,364 @@
+{% extends "base.html" %} {% block title %}用户管理 - 管理员面板{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-users text-primary"></i> 用户管理</h3>
+    <div>
+      <a href="{{ url_for('admin') }}" class="btn btn-outline-secondary btn-sm"
+        ><i class="fas fa-arrow-left"></i> 返回面板</a
+      >
+      <a
+        href="/dbadmin/user/"
+        class="btn btn-outline-warning btn-sm"
+        target="_blank"
+        ><i class="fas fa-database"></i> 数据库编辑</a
+      >
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <span class="badge bg-primary">{{ users|length }}</span> 个用户 |
+          <span class="badge bg-warning"
+            >{{ users|selectattr('is_admin', 'equalto', true)|list|length
+            }}</span
+          >
+          个管理员 |
+          <span class="badge bg-danger"
+            >{{ users|selectattr('is_banned', 'equalto', true)|list|length
+            }}</span
+          >
+          个封禁
+        </div>
+        <div class="col-md-6">
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            id="userSearch"
+            placeholder="搜索用户..."
+            onkeyup="filterUsers()"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" id="usersTable">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>头像</th>
+              <th>用户名</th>
+              <th>邮箱</th>
+              <th>角色</th>
+              <th>权限</th>
+              <th>状态</th>
+              <th>加入时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr class="user-row">
+              <td>{{ user.id }}</td>
+              <td>
+                <img
+                  src="{{ get_avatar_url(user.avatar) }}"
+                  class="rounded-circle"
+                  style="width: 32px; height: 32px"
+                  alt=""
+                />
+              </td>
+              <td>
+                <a
+                  href="{{ url_for('profile', username=user.username) }}"
+                  class="text-decoration-none fw-bold"
+                  >{{ user.username }}</a
+                >
+              </td>
+              <td><small>{{ user.email }}</small></td>
+              <td>
+                {% if user.is_admin %}
+                <span class="badge bg-warning"
+                  ><i class="fas fa-crown"></i> 管理员</span
+                >
+                {% else %}
+                <span class="badge bg-secondary">普通用户</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if user.can_post %}<span
+                  class="badge bg-success me-1"
+                  title="可发帖"
+                  >帖</span
+                >{% else %}<span class="badge bg-danger me-1" title="禁止发帖"
+                  >帖</span
+                >{% endif %} {% if user.can_video %}<span
+                  class="badge bg-success me-1"
+                  title="可发视频"
+                  >视</span
+                >{% else %}<span class="badge bg-danger me-1" title="禁止发视频"
+                  >视</span
+                >{% endif %} {% if user.can_comment %}<span
+                  class="badge bg-success"
+                  title="可评论"
+                  >评</span
+                >{% else %}<span class="badge bg-danger" title="禁止评论"
+                  >评</span
+                >{% endif %}
+              </td>
+              <td>
+                {% if user.is_banned %}
+                <span class="badge bg-danger">已封禁</span>
+                {% elif not user.is_active %}
+                <span class="badge bg-warning">非活跃</span>
+                {% else %}
+                <span class="badge bg-success">正常</span>
+                {% endif %}
+              </td>
+              <td>
+                <small
+                  >{{ user.join_date.strftime('%Y-%m-%d') if user.join_date else
+                  '未知' }}</small
+                >
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  {% if user.id != current_user.id %}
+                  <!-- 设为/取消管理员 -->
+                  <a
+                    href="{{ url_for('toggle_admin', user_id=user.id) }}"
+                    class="btn btn-outline-warning"
+                    title="{% if user.is_admin %}取消管理员{% else %}设为管理员{% endif %}"
+                    onclick="
+                      return confirm(
+                        '确定{% if user.is_admin %}取消{% else %}设置{% endif %}管理员权限？',
+                      );
+                    "
+                  >
+                    <i
+                      class="fas fa-{% if user.is_admin %}user{% else %}crown{% endif %}"
+                    ></i>
+                  </a>
+
+                  <!-- 权限管理下拉菜单 -->
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary dropdown-toggle"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i class="fas fa-cogs"></i> 权限
+                    </button>
+                    <ul class="dropdown-menu" style="min-width: 200px">
+                      <!-- 限制功能 -->
+                      <li>
+                        <h6 class="dropdown-header">
+                          <i class="fas fa-ban text-danger"></i> 限制功能
+                        </h6>
+                      </li>
+
+                      <!-- 发帖权限 -->
+                      {% if user.can_post %}
+                      <li>
+                        <a
+                          class="dropdown-item text-warning"
+                          href="{{ url_for('ban_post_only', user_id=user.id) }}"
+                        >
+                          <i class="fas fa-file"></i> 禁止发帖
+                        </a>
+                      </li>
+                      {% else %}
+                      <li>
+                        <a
+                          class="dropdown-item text-success"
+                          href="{{ url_for('unban_post_only', user_id=user.id) }}"
+                        >
+                          <i class="fas fa-file"></i> 允许发帖
+                        </a>
+                      </li>
+                      {% endif %}
+
+                      <!-- 视频权限 -->
+                      {% if user.can_video %}
+                      <li>
+                        <a
+                          class="dropdown-item text-warning"
+                          href="{{ url_for('ban_video_only', user_id=user.id) }}"
+                        >
+                          <i class="fas fa-video"></i> 禁止发视频
+                        </a>
+                      </li>
+                      {% else %}
+                      <li>
+                        <a
+                          class="dropdown-item text-success"
+                          href="{{ url_for('unban_video_only', user_id=user.id) }}"
+                        >
+                          <i class="fas fa-video"></i> 允许发视频
+                        </a>
+                      </li>
+                      {% endif %}
+
+                      <!-- 评论权限 -->
+                      {% if user.can_comment %}
+                      <li>
+                        <a
+                          class="dropdown-item text-warning"
+                          href="{{ url_for('ban_comment_only', user_id=user.id) }}"
+                        >
+                          <i class="fas fa-comment"></i> 禁止评论
+                        </a>
+                      </li>
+                      {% else %}
+                      <li>
+                        <a
+                          class="dropdown-item text-success"
+                          href="{{ url_for('unban_comment_only', user_id=user.id) }}"
+                        >
+                          <i class="fas fa-comment"></i> 允许评论
+                        </a>
+                      </li>
+                      {% endif %}
+
+                      <li><hr class="dropdown-divider" /></li>
+
+                      <!-- 全部解封 -->
+                      {% if user.is_banned or not user.can_post or not
+                      user.can_video or not user.can_comment %}
+                      <li>
+                        <a
+                          class="dropdown-item text-success fw-bold"
+                          href="{{ url_for('unban_user', user_id=user.id) }}"
+                        >
+                          <i class="fas fa-check-circle"></i> 全部解封
+                        </a>
+                      </li>
+                      {% endif %}
+                    </ul>
+                  </div>
+
+                  <!-- 重置密码 -->
+                  <a
+                    href="{{ url_for('admin_reset_password', user_id=user.id) }}"
+                    class="btn btn-outline-danger"
+                    title="重置密码"
+                    onclick="
+                      return confirm(
+                        '确定要重置该用户的密码吗？\n新密码将随机生成并显示。',
+                      );
+                    "
+                  >
+                    <i class="fas fa-key"></i>
+                  </a>
+
+                  <!-- 封禁/解封按钮（保留原有逻辑） -->
+                  {% if user.is_banned %}
+                  <a
+                    href="{{ url_for('unban_user', user_id=user.id) }}"
+                    class="btn btn-outline-success"
+                    title="解封"
+                  >
+                    <i class="fas fa-unlock"></i>
+                  </a>
+                  {% else %}
+                  <button
+                    class="btn btn-outline-danger"
+                    title="封禁"
+                    data-bs-toggle="modal"
+                    data-bs-target="#banModal"
+                    data-user-id="{{ user.id }}"
+                    data-user-name="{{ user.username }}"
+                  >
+                    <i class="fas fa-ban"></i>
+                  </button>
+                  {% endif %} {% else %}
+                  <span class="badge bg-info">当前用户</span>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 封禁模态框 -->
+<div class="modal fade" id="banModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="fas fa-ban"></i> 封禁用户</h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form id="banForm" method="POST">
+        <div class="modal-body">
+          <input type="hidden" id="banUserId" name="user_id" value="" />
+          <div class="mb-3">
+            <label class="form-label">封禁类型</label>
+            <select class="form-select" name="ban_type" required>
+              <option value="full">完全封禁（无法登录）</option>
+              <option value="post">禁止发帖</option>
+              <option value="video">禁止发视频</option>
+              <option value="comment">禁止评论</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">封禁原因</label>
+            <textarea
+              class="form-control"
+              name="reason"
+              rows="3"
+              placeholder="请输入封禁原因..."
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            取消
+          </button>
+          <button type="submit" class="btn btn-danger">确认封禁</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var banModal = document.getElementById("banModal");
+    banModal.addEventListener("show.bs.modal", function (event) {
+      var button = event.relatedTarget;
+      var userId = button.getAttribute("data-user-id");
+      var userName = button.getAttribute("data-user-name");
+      document.getElementById("banUserId").value = userId;
+      document.querySelector("#banModal .modal-title").innerHTML =
+        '<i class="fas fa-ban"></i> 封禁用户: ' + userName;
+      document.getElementById("banForm").action = "/admin/ban_user/" + userId;
+    });
+  });
+
+  function filterUsers() {
+    var input = document.getElementById("userSearch").value.toLowerCase();
+    var rows = document.querySelectorAll(".user-row");
+    rows.forEach(function (row) {
+      var text = row.textContent.toLowerCase();
+      row.style.display = text.includes(input) ? "" : "none";
+    });
+  }
+</script>
+{% endblock %}
