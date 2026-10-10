@@ -16,6 +16,7 @@ from datetime import datetime
 import threading
 import schedule
 import time
+import os
 
 
 # 延迟导入 app，避免循环依赖
@@ -79,9 +80,23 @@ class ScheduledTasks:
 scheduler = ScheduledTasks()
 
 
+def _truthy(name: str) -> bool:
+    """读取布尔型环境变量（1/true/yes 均视为真）。"""
+    return os.environ.get(name, '').strip().lower() in ('1', 'true', 'yes', 'on')
+
+
 def init_scheduler():
-    """初始化并启动定时任务"""
+    """初始化并启动定时任务。
+
+    免费云主机（如 PythonAnywhere Free）容不下常驻后台线程，
+    会拖垮 worker 并被平台 kill。设 DISABLE_SCHEDULER=1 可关闭本线程，
+    新闻改由手动执行 news_scraper_v2.py 补充。
+    """
+    if _truthy('DISABLE_SCHEDULER'):
+        print("定时任务线程已禁用（检测到 DISABLE_SCHEDULER）")
+        return None
     scheduler.start()
+    return scheduler
 
 
 if __name__ == '__main__':

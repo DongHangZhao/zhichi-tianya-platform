@@ -538,7 +538,14 @@ def cleanup_expired_user_statuses():
 
 # 定期清理过期用户状态
 def start_status_cleanup_timer():
-    """启动定期清理过期用户状态的定时器"""
+    """启动定期清理过期用户状态的定时器
+
+    免费云主机建议设 DISABLE_STATUS_CLEANUP=1 关闭该常驻线程以节省 CPU 配额。
+    """
+    if os.environ.get('DISABLE_STATUS_CLEANUP', '').strip().lower() in ('1', 'true', 'yes', 'on'):
+        print("用户状态清理线程已禁用（检测到 DISABLE_STATUS_CLEANUP）")
+        return
+
     def timer_loop():
         try:
             cleanup_expired_user_statuses()
@@ -607,7 +614,15 @@ def add_comment(post_id):
 
 
 def check_and_fetch_today_news():
-    """检查今天是否有新闻，没有则自动抓取"""
+    """检查今天是否有新闻，没有则自动抓取
+
+    免费云主机（如 PythonAnywhere Free）建议设 DISABLE_NEWS_FETCH=1 关闭：
+    1) 其出站网络被限制在白名单，新华网/人民网/央视/澎湃均不可达，抓取注定失败；
+    2) 每次访问首页都会派生 2 个线程，叠加起来会拖垮单 worker 并被平台 kill。
+    """
+    if os.environ.get('DISABLE_NEWS_FETCH', '').strip().lower() in ('1', 'true', 'yes', 'on'):
+        return
+
     from datetime import date
     today = date.today()
 
